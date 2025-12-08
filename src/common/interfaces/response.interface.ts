@@ -27,3 +27,18 @@ export interface PaginationResult<T> {
   limit: number;
   total: number;
 }
+
+export interface ErrorResponse {
+  success: boolean;
+  error: {
+    code: string;
+    message: string;
+    details?: Record<string, unknown> | string[];
+  };
+  meta: {
+    statusCode: number;
+    timestamp: string;
+    path: string;
+    requestId: string;
+  };
+}

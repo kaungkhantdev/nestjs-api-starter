@@ -11,7 +11,7 @@ import {
   ApiResponse,
   PaginationResult,
   ResponseMeta,
-} from './interfaces/response.interface';
+} from '../interfaces/response.interface';
 import { randomUUID } from 'crypto';
 
 @Injectable()
