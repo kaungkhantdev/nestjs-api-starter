@@ -1,0 +1,113 @@
+### E-commerce API - HTTP Requests
+### Base URL
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+###############################################
+# AUTH ENDPOINTS
+###############################################
+
+### Register a new user
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123",
+  "username": "johndoe",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### Register another user
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "jane.smith@example.com",
+  "password": "password123",
+  "username": "janesmith",
+  "firstName": "Jane",
+  "lastName": "Smith"
+}
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "username": "johndoe",
+  "password": "password123"
+}
+
+### Save the access token from login response
+@accessToken = {{login.response.body.data.accessToken}}
+
+###############################################
+# USER ENDPOINTS
+###############################################
+
+### Get current user profile (requires authentication)
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{accessToken}}
+
+### Get all users (Admin only)
+GET {{baseUrl}}/users?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+
+### Get user by ID (Admin only)
+GET {{baseUrl}}/users/USER_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+###############################################
+# EXAMPLES WITH DIFFERENT SCENARIOS
+###############################################
+
+### Example: Login with wrong password (should fail)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "wrongpassword"
+}
+
+### Example: Register with duplicate email (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123",
+  "username": "johndoe2",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### Example: Access protected endpoint without token (should fail)
+GET {{baseUrl}}/users/me
+
+### Example: Register with invalid email (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "invalid-email",
+  "password": "password123",
+  "username": "testuser",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### Example: Register with short password (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "123",
+  "username": "testuser",
+  "firstName": "Test",
+  "lastName": "User"
+}

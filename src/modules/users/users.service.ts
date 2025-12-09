@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { User } from 'generated/prisma/client';
-import { USER_REPOSITORY } from './users.module';
+import { USER_REPOSITORY } from './constants';
 import { IUserRepository } from './repositories/users.repository.interface';
 
 @Injectable()
@@ -33,6 +33,7 @@ export class UsersService {
     // Check if exists
     const existing =
       data.email && (await this.userRepository.findByEmail(data.email));
+    console.log(existing);
     if (existing) {
       throw new Error('User already exists');
     }

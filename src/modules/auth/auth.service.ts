@@ -2,26 +2,44 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
-import { RegisterDto, AuthResponseDto } from './dto/auth.dto';
+import { RegisterDto, AuthResponseDto, LoginDto } from './dto/auth.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { User } from 'generated/prisma/client';
+
+type UserWithoutPassword = Omit<User, 'password'>;
 
 @Injectable()
 export class AuthService {
+  private readonly SALT_ROUNDS = 10;
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
+  async login(dto: LoginDto): Promise<AuthResponseDto> {
+    const user = await this.validateCredentials(dto.username, dto.password);
+    return this.generateAuthResponse(user);
+  }
+
+  async register(dto: RegisterDto): Promise<AuthResponseDto> {
+    const hashedPassword = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
+
+    const user = await this.usersService.createUser({
+      ...dto,
+      password: hashedPassword,
+    });
+
+    return this.generateAuthResponse(this.excludePassword(user));
+  }
+
+  async validateCredentials(
+    username: string,
+    password: string,
+  ): Promise<UserWithoutPassword> {
     const user = await this.usersService.getUserByUsername(username);
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -29,14 +47,13 @@ export class AuthService {
       throw new UnauthorizedException('Account is inactive');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...result } = user;
-    return result;
+    return this.excludePassword(user);
   }
 
-  login(user: any): AuthResponseDto {
+  private generateAuthResponse(user: UserWithoutPassword): AuthResponseDto {
     const payload: JwtPayload = {
       sub: user.id,
+      username: user.username,
       email: user.email,
       role: user.role,
     };
@@ -53,10 +70,9 @@ export class AuthService {
     };
   }
 
-  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const user = await this.usersService.createUser(registerDto);
+  private excludePassword(user: User): UserWithoutPassword {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...userWithoutPassword } = user;
-    return this.login(userWithoutPassword);
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 }

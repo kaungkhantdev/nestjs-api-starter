@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from '@/config';
 import { DatabaseModule } from './database/database.module';
 import { ShareModule } from './shared/shared.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ShareModule } from './shared/shared.module';
     DatabaseModule,
     ShareModule,
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
