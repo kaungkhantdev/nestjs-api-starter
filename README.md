@@ -1,6 +1,6 @@
-# E-Commerce API
+# NestJs API Starter
 
-A robust and scalable e-commerce REST API built with NestJS, Prisma, PostgreSQL, and JWT authentication. This project features a clean architecture with repository pattern, role-based access control, and comprehensive testing.
+A robust and scalable REST API built with NestJS, Prisma, PostgreSQL, and JWT authentication. This project features a clean architecture with repository pattern, role-based access control, and comprehensive testing.
 
 ## Features
 
@@ -55,7 +55,7 @@ A robust and scalable e-commerce REST API built with NestJS, Prisma, PostgreSQL,
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd ecommerce-api
+cd nestjs-api-starter
 ```
 
 2. Install dependencies:
@@ -71,7 +71,7 @@ cp .env.example .env
 Edit the `.env` file with your configuration:
 ```env
 # Database
-DATABASE_URL="postgresql://user:password@localhost:5432/ecommerce?schema=public"
+DATABASE_URL="postgresql://user:password@localhost:5432/nestjs_starter?schema=public"
 
 # JWT
 JWT_SECRET="your-super-secret-jwt-key-change-this"

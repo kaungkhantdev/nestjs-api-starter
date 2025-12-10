@@ -1,4 +1,4 @@
-### E-commerce API - HTTP Requests
+### API - HTTP Requests
 ### Base URL
 @baseUrl = http://localhost:3000
 @contentType = application/json

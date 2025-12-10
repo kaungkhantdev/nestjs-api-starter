@@ -28,8 +28,8 @@ async function bootstrap() {
 
   // Swagger configuration
   const config = new DocumentBuilder()
-    .setTitle('E-Commerce API')
-    .setDescription('E-Commerce API documentation')
+    .setTitle('API')
+    .setDescription('API documentation')
     .setVersion('1.0')
     .addBearerAuth(
       {
