@@ -184,10 +184,10 @@ describe('Auth E2E Tests', () => {
         .send(loginData)
         .expect(201);
 
-      // expect(response.body).toHaveProperty('accessToken');
-      // expect(response.body.user).toHaveProperty('id', mockUser.id);
-      // expect(response.body.user).toHaveProperty('username', mockUser.username);
-      // expect(response.body.user).not.toHaveProperty('password');
+      expect(response.body).toHaveProperty('accessToken');
+      expect(response.body.user).toHaveProperty('id', mockUser.id);
+      expect(response.body.user).toHaveProperty('username', mockUser.username);
+      expect(response.body.user).not.toHaveProperty('password');
     });
 
     it('should fail login with invalid password', async () => {

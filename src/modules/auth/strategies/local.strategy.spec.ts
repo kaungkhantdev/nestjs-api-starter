@@ -50,9 +50,9 @@ describe('LocalStrategy', () => {
         new UnauthorizedException('Invalid credentials'),
       );
 
-      await expect(strategy.validate('testuser', 'wrongpassword')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        strategy.validate('testuser', 'wrongpassword'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should propagate Account inactive error', async () => {
@@ -60,9 +60,9 @@ describe('LocalStrategy', () => {
         new UnauthorizedException('Account is inactive'),
       );
 
-      await expect(strategy.validate('inactiveuser', 'password123')).rejects.toThrow(
-        'Account is inactive',
-      );
+      await expect(
+        strategy.validate('inactiveuser', 'password123'),
+      ).rejects.toThrow('Account is inactive');
     });
   });
 });
