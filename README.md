@@ -1,98 +1,240 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJs API Starter
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A robust and scalable REST API built with NestJS, Prisma, PostgreSQL, and JWT authentication. This project features a clean architecture with repository pattern, role-based access control, and comprehensive testing.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- **Authentication & Authorization**
+  - JWT-based authentication
+  - Local and JWT strategies (Passport)
+  - Role-based access control (CUSTOMER, ADMIN, VENDOR)
+  - Password hashing with bcrypt
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **User Management**
+  - User registration and login
+  - User profile management
+  - Soft delete support
+  - Role-based permissions
 
-## Project setup
+- **Architecture**
+  - Clean architecture with repository pattern
+  - Generic repository with CRUD operations
+  - Soft-deletable repository
+  - Custom decorators and guards
+  - Global exception filters
+  - Response transformation interceptors
 
+- **API Documentation**
+  - Swagger/OpenAPI documentation
+  - Interactive API explorer
+
+- **Testing**
+  - Unit tests for services, controllers, and utilities
+  - E2E tests
+  - Integration tests
+  - Test coverage reporting
+
+## Tech Stack
+
+- **Framework**: NestJS 11
+- **Database**: PostgreSQL with Prisma ORM 7
+- **Authentication**: Passport.js with JWT
+- **Validation**: class-validator & class-transformer
+- **Documentation**: Swagger/OpenAPI
+- **Testing**: Jest & Supertest
+- **Language**: TypeScript 5
+
+## Prerequisites
+
+- Node.js (v18 or higher)
+- PostgreSQL (v14 or higher)
+- npm or yarn
+
+## Installation
+
+1. Clone the repository:
 ```bash
-$ npm install
+git clone <repository-url>
+cd nestjs-api-starter
 ```
 
-## Compile and run the project
-
+2. Install dependencies:
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
-
+3. Set up environment variables:
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cp .env.example .env
 ```
 
-## Deployment
+Edit the `.env` file with your configuration:
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/nestjs_starter?schema=public"
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+# JWT
+JWT_SECRET="your-super-secret-jwt-key-change-this"
+JWT_EXPIRATION="7d"
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# App
+PORT=3000
+NODE_ENV="development"
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+4. Run Prisma migrations:
+```bash
+npx prisma migrate dev
+```
 
-## Resources
+5. Generate Prisma client:
+```bash
+npx prisma generate
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## Running the Application
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Development mode
+```bash
+npm run start:dev
+```
 
-## Support
+### Production mode
+```bash
+npm run build
+npm run start:prod
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Debug mode
+```bash
+npm run start:debug
+```
 
-## Stay in touch
+The API will be available at:
+- Application: `http://localhost:3000`
+- Swagger Documentation: `http://localhost:3000/api`
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## API Endpoints
+
+### Authentication
+- `POST /auth/register` - Register a new user
+- `POST /auth/login` - Login and get JWT token
+
+### Users
+- `GET /users` - Get all users (Admin only)
+- `GET /users/:id` - Get user by ID
+- `PUT /users/:id` - Update user
+- `DELETE /users/:id` - Soft delete user
+
+For detailed API documentation, visit the Swagger UI at `/api` when the application is running.
+
+## Testing
+
+### Run all tests
+```bash
+npm run test
+```
+
+### Run tests in watch mode
+```bash
+npm run test:watch
+```
+
+### Run e2e tests
+```bash
+npm run test:e2e
+```
+
+### Generate test coverage
+```bash
+npm run test:cov
+```
+
+## Architecture Patterns
+
+### Repository Pattern
+The project uses a generic repository pattern for database operations:
+
+- **BaseRepository**: Base CRUD operations
+- **ReadRepository**: Read-only operations
+- **WriteRepository**: Create, update, delete operations
+- **SoftDeletableRepository**: Soft delete support
+
+### Authentication Flow
+1. User registers or logs in
+2. Server validates credentials and generates JWT token
+3. Client includes JWT token in Authorization header
+4. JwtAuthGuard validates token on protected routes
+5. RoleGuard checks user permissions
+
+### Custom Decorators
+- `@Public()` - Mark routes as public (bypass JWT guard)
+- `@Roles(UserRole.ADMIN)` - Protect routes by role
+- `@CurrentUser()` - Get current user from request
+
+## Development
+
+### Code Formatting
+```bash
+npm run format
+```
+
+### Linting
+```bash
+npm run lint
+```
+
+### Database Commands
+```bash
+# Create migration
+npx prisma migrate dev --name migration_name
+
+# Reset database
+npx prisma migrate reset
+
+# Open Prisma Studio
+npx prisma studio
+```
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | - |
+| `JWT_SECRET` | Secret key for JWT signing | - |
+| `JWT_EXPIRATION` | JWT token expiration time | 7d |
+| `PORT` | Application port | 3000 |
+| `NODE_ENV` | Environment mode | development |
+
+## Security Features
+
+- Password hashing with bcrypt
+- JWT token-based authentication
+- Role-based access control (RBAC)
+- Input validation with class-validator
+- SQL injection protection via Prisma
+- Global exception handling
+- Request payload whitelisting
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is [UNLICENSED](LICENSE).
+
+## Resources
+
+- [NestJS Documentation](https://docs.nestjs.com)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Passport.js Documentation](http://www.passportjs.org)
+- [JWT Documentation](https://jwt.io)
+
+## Support
+
+For questions and support, please open an issue in the GitHub repository.
