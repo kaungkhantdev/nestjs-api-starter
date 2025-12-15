@@ -1,10 +1,18 @@
 {
   "name": "nestjs-api-starter",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
-  "private": true,
-  "license": "UNLICENSED",
+  "description": "NestJS API starter with Prisma, JWT auth, and Swagger",
+  "author": "Kaung Khant Zaw <kaungkhant.dev@gmail.com>",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaungkhantdev/nestjs-api-starter.git"
+  },
+  "keywords": ["nestjs", "starter", "prisma", "api", "jwt"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
