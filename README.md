@@ -84,12 +84,12 @@ NODE_ENV="development"
 
 4. Run Prisma migrations:
 ```bash
-npx prisma migrate dev
+npm run prisma:migrate:dev
 ```
 
 5. Generate Prisma client:
 ```bash
-npx prisma generate
+npm run prisma:generate
 ```
 
 ## Running the Application
