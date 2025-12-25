@@ -24,16 +24,16 @@ import { UsersService } from './users.service';
 import {
   // UpdateUserDto,
   UserResponseDto,
-} from './dto/user.dto';
+} from './dto/users.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { UserRole } from 'generated/prisma/enums';
-
+import { Public } from '@/common/decorators/public.decorator';
 @ApiTags('Users')
 @ApiBearerAuth('JWT-auth')
-@Controller('users')
+@Controller({ path: 'users', version: '1' })
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -65,7 +65,8 @@ export class UsersController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN)
+  @Public()
+  // @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Get all users (Admin only)',
     description: 'Returns a paginated list of all users. Requires ADMIN role.',
@@ -94,7 +95,10 @@ export class UsersController {
   @ApiForbiddenResponse({
     description: 'User does not have ADMIN role',
   })
-  async findAll(@Query('page') page = 1, @Query('limit') limit = 10) {
+  async findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
     return await this.usersService.getAll(page, limit);
   }
 

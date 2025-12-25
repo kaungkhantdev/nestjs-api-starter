@@ -1,1 +1,1 @@
-export const USER_REPOSITORY = Symbol('IUserRepository');
+export const USER_REPOSITORY = Symbol('IUsersRepository');
