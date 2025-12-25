@@ -5,7 +5,7 @@ import { IRepository } from '@/shared/repositories/interfaces';
  * User-specific repository interface
  * Extends generic IRepository and adds domain-specific methods
  */
-export interface IUserRepository extends IRepository<User> {
+export interface IUsersRepository extends IRepository<User> {
   findByEmail(email: string): Promise<User | null>;
   findById(id: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
