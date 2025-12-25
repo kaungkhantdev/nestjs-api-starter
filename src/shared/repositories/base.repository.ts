@@ -7,15 +7,14 @@ import { ModelName, PrismaDelegate } from './types';
  * Single Responsibility: Only handles Prisma model access initialization
  * All repositories extend this to get access to the Prisma delegate
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export abstract class BaseRepository<T> {
-  protected readonly model: PrismaDelegate;
+  protected readonly model: PrismaDelegate<T>;
 
   constructor(
     protected readonly prisma: PrismaService,
     protected readonly modelName: ModelName,
   ) {
-    this.model = (prisma as unknown as Record<string, PrismaDelegate>)[
+    this.model = (prisma as unknown as Record<string, PrismaDelegate<T>>)[
       modelName
     ];
 

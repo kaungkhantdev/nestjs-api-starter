@@ -4,18 +4,18 @@ import { Prisma } from 'generated/prisma/client';
 // Prisma Types
 // ============================================
 
-export type PrismaDelegate = {
-  findUnique: (args: unknown) => Promise<unknown>;
-  findFirst: (args: unknown) => Promise<unknown>;
-  findMany: (args: unknown) => Promise<unknown>;
-  create: (args: unknown) => Promise<unknown>;
-  update: (args: unknown) => Promise<unknown>;
-  delete: (args: unknown) => Promise<unknown>;
-  count: (args?: unknown) => Promise<number>;
-  upsert: (args: unknown) => Promise<unknown>;
-  createMany: (args: unknown) => Promise<BatchResult>;
-  updateMany: (args: unknown) => Promise<BatchResult>;
-  deleteMany: (args: unknown) => Promise<BatchResult>;
+export type PrismaDelegate<T = any> = {
+  findUnique: (args: Record<string, any>) => Promise<T | null>;
+  findFirst: (args?: Record<string, any>) => Promise<T | null>;
+  findMany: (args?: Record<string, any>) => Promise<T[]>;
+  create: (args: Record<string, any>) => Promise<T>;
+  update: (args: Record<string, any>) => Promise<T>;
+  delete: (args: Record<string, any>) => Promise<T>;
+  count: (args?: Record<string, any>) => Promise<number>;
+  upsert: (args: Record<string, any>) => Promise<T>;
+  createMany: (args: Record<string, any>) => Promise<BatchResult>;
+  updateMany: (args: Record<string, any>) => Promise<BatchResult>;
+  deleteMany: (args: Record<string, any>) => Promise<BatchResult>;
 };
 
 export type ModelName = Prisma.ModelName;
