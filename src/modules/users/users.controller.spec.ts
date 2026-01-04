@@ -2,25 +2,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import {
-  mockUser,
-  mockUsers,
-  mockAdmin,
-} from '../../../test/fixtures/users.fixture';
+import { mockUser, mockAdmin } from '../../../test/fixtures/users.fixture';
 
 describe('UsersController', () => {
   let controller: UsersController;
   let usersService: jest.Mocked<UsersService>;
 
   beforeEach(async () => {
-    const mockUsersService = {
+    const mockUserService = {
       getFindById: jest.fn(),
       getAll: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
-      providers: [{ provide: UsersService, useValue: mockUsersService }],
+      providers: [{ provide: UsersService, useValue: mockUserService }],
     }).compile();
 
     controller = module.get<UsersController>(UsersController);
@@ -57,28 +53,52 @@ describe('UsersController', () => {
 
   describe('findAll', () => {
     it('should return all users with default pagination', async () => {
-      usersService.getAll.mockResolvedValue(mockUsers);
+      const paginatedResponse = {
+        items: [mockUser],
+        page: 1,
+        limit: 10,
+        total: 1,
+      };
+      usersService.getAll.mockResolvedValue(paginatedResponse);
 
       const result = await controller.findAll();
 
       expect(usersService.getAll).toHaveBeenCalledWith(1, 10);
-      expect(result).toEqual(mockUsers);
+      expect(result).toEqual(paginatedResponse);
+      expect(result.items).toHaveLength(1);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(10);
     });
 
     it('should return users with custom pagination', async () => {
-      usersService.getAll.mockResolvedValue(mockUsers);
+      const paginatedResponse = {
+        items: [mockUser],
+        page: 2,
+        limit: 5,
+        total: 1,
+      };
+      usersService.getAll.mockResolvedValue(paginatedResponse);
 
-      await controller.findAll(2, 5);
+      const result = await controller.findAll(2, 5);
 
       expect(usersService.getAll).toHaveBeenCalledWith(2, 5);
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(5);
     });
 
     it('should handle empty results', async () => {
-      usersService.getAll.mockResolvedValue([]);
+      const emptyResponse = {
+        items: [],
+        page: 1,
+        limit: 10,
+        total: 0,
+      };
+      usersService.getAll.mockResolvedValue(emptyResponse);
 
       const result = await controller.findAll();
 
-      expect(result).toEqual([]);
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 

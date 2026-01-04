@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { USER_REPOSITORY } from './constants';
-import { IUserRepository } from './repositories/users.repository.interface';
+import { IUsersRepository } from './repositories/users.repository.interface';
 import {
   mockUser,
   mockUsers,
@@ -10,7 +10,7 @@ import {
 
 describe('UsersService', () => {
   let service: UsersService;
-  let userRepository: jest.Mocked<IUserRepository>;
+  let userRepository: jest.Mocked<IUsersRepository>;
 
   beforeEach(async () => {
     const mockUserRepository = {
@@ -22,6 +22,7 @@ describe('UsersService', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -179,26 +180,61 @@ describe('UsersService', () => {
   });
 
   describe('getAll', () => {
-    it('should return all users with pagination', async () => {
+    it('should return paginated users with default pagination', async () => {
+      const totalCount = 25;
       userRepository.findAll.mockResolvedValue(mockUsers);
+      userRepository.count.mockResolvedValue(totalCount);
 
-      const result = await service.getAll(0, 10);
+      const result = await service.getAll(1, 10);
 
       expect(userRepository.findAll).toHaveBeenCalledWith({
         skip: 0,
         take: 10,
       });
-      expect(result).toEqual(mockUsers);
+      expect(userRepository.count).toHaveBeenCalled();
+      expect(result).toEqual({
+        items: mockUsers,
+        page: 1,
+        limit: 10,
+        total: totalCount,
+      });
     });
 
-    it('should pass skip and take correctly', async () => {
+    it('should calculate skip correctly for different pages', async () => {
+      const totalCount = 25;
       userRepository.findAll.mockResolvedValue([]);
+      userRepository.count.mockResolvedValue(totalCount);
 
-      await service.getAll(20, 5);
+      const result = await service.getAll(3, 5);
 
       expect(userRepository.findAll).toHaveBeenCalledWith({
-        skip: 20,
+        skip: 10,
         take: 5,
+      });
+      expect(result).toEqual({
+        items: [],
+        page: 3,
+        limit: 5,
+        total: totalCount,
+      });
+    });
+
+    it('should handle page 2 with limit 10', async () => {
+      const totalCount = 50;
+      userRepository.findAll.mockResolvedValue(mockUsers);
+      userRepository.count.mockResolvedValue(totalCount);
+
+      const result = await service.getAll(2, 10);
+
+      expect(userRepository.findAll).toHaveBeenCalledWith({
+        skip: 10,
+        take: 10,
+      });
+      expect(result).toEqual({
+        items: mockUsers,
+        page: 2,
+        limit: 10,
+        total: totalCount,
       });
     });
   });

@@ -3,14 +3,20 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { RegisterDto, AuthResponseDto, LoginDto } from './dto/auth.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { User } from 'generated/prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 type UserWithoutPassword = Omit<User, 'password'>;
+
+interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -19,14 +25,15 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async login(dto: LoginDto): Promise<AuthResponseDto> {
+  async login(dto: LoginDto): Promise<AuthResponseDto & TokenPair> {
     const user = await this.validateCredentials(dto.username, dto.password);
-    return this.generateAuthResponse(user);
+    return this.generateAuthResponseWithTokens(user);
   }
 
-  async register(dto: RegisterDto): Promise<AuthResponseDto> {
+  async register(dto: RegisterDto): Promise<AuthResponseDto & TokenPair> {
     await this.isExitUser(dto.email);
 
     const hashedPassword = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
@@ -36,7 +43,25 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    return this.generateAuthResponse(this.excludePassword(user));
+    return this.generateAuthResponseWithTokens(this.excludePassword(user));
+  }
+
+  async refresh(refreshToken: string): Promise<TokenPair> {
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
+        secret: this.configService.get<string>('jwt.refreshSecret'),
+      });
+
+      const user = await this.usersService.getFindById(payload.sub);
+
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      return this.generateTokenPair(this.excludePassword(user));
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 
   async validateCredentials(
@@ -56,16 +81,43 @@ export class AuthService {
     return this.excludePassword(user);
   }
 
-  private generateAuthResponse(user: UserWithoutPassword): AuthResponseDto {
-    const payload: JwtPayload = {
+  private generateTokenPair(user: UserWithoutPassword): TokenPair {
+    const payload = {
       sub: user.id,
       username: user.username,
       email: user.email,
       role: user.role,
     };
 
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('jwt.secret'),
+      expiresIn:
+        this.configService.get<JwtSignOptions['expiresIn']>(
+          'jwt.accessTokenExpiresIn',
+        ) ?? '15m',
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('jwt.refreshSecret'),
+      expiresIn:
+        this.configService.get<JwtSignOptions['expiresIn']>(
+          'jwt.refreshTokenExpiresIn',
+        ) ?? '7d',
+    });
+
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  private generateAuthResponseWithTokens(
+    user: UserWithoutPassword,
+  ): AuthResponseDto & TokenPair {
+    const tokens = this.generateTokenPair(user);
+
+    return {
+      ...tokens,
       user: {
         id: user.id,
         email: user.email,
