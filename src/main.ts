@@ -31,6 +31,14 @@ async function bootstrap() {
     }),
   );
 
+  // Cors
+  app.enableCors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   // Global filters
   app.useGlobalFilters(new HttpExceptionFilter());
 
@@ -41,7 +49,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('API')
     .setDescription('API documentation')
-    .setVersion('1.0')
+    .setVersion('1.0.1')
     .addBearerAuth(
       {
         type: 'http',
