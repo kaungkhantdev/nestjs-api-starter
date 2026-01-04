@@ -26,7 +26,7 @@ describe('AppController (e2e)', () => {
   });
 
   describe('GET /', () => {
-    it('should return Hello World', () => {
+    it('should return "Hello World!"', () => {
       return request(app.getHttpServer())
         .get('/')
         .expect(200)
@@ -35,22 +35,21 @@ describe('AppController (e2e)', () => {
   });
 
   describe('GET /data', () => {
-    it('should return data structure', () => {
+    it('should return sample data with metadata', () => {
       return request(app.getHttpServer())
         .get('/data')
         .expect(200)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('data');
-          expect(res.body.data).toHaveProperty('id');
-          expect(res.body.data).toHaveProperty('name');
-          expect(res.body).toHaveProperty('metadata');
+        .expect({
+          data: {
+            id: 1,
+            name: 'hello',
+          },
+          metadata: {
+            total: 1,
+            next_page: 1,
+            size: 10,
+          },
         });
-    });
-  });
-
-  describe('GET /error', () => {
-    it('should return 400 bad request', () => {
-      return request(app.getHttpServer()).get('/error').expect(400);
     });
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "nestjs-api-starter",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "description": "NestJS API starter with Prisma, JWT auth, and Swagger",
   "author": "Kaung Khant Zaw <kaungkhantzaw.dev@gmail.com>",
   "private": false,
@@ -39,6 +39,7 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
+    "cookie-parser": "^1.4.7",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -55,6 +56,7 @@
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
     "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",
