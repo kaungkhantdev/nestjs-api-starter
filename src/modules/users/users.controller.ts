@@ -30,7 +30,6 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { UserRole } from 'generated/prisma/enums';
-import { Public } from '@/common/decorators/public.decorator';
 @ApiTags('Users')
 @ApiBearerAuth('JWT-auth')
 @Controller({ path: 'users', version: '1' })
@@ -65,7 +64,6 @@ export class UsersController {
   }
 
   @Get()
-  @Public()
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Get all users (Admin only)',

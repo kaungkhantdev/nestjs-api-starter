@@ -1,6 +1,8 @@
 import { User } from 'generated/prisma/client';
 import { IRepository } from '@/shared/repositories/interfaces';
 
+export const USER_REPOSITORY = Symbol('IUsersRepository');
+
 /**
  * User-specific repository interface
  * Extends generic IRepository and adds domain-specific methods
