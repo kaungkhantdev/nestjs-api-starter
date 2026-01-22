@@ -66,7 +66,7 @@ export class UsersController {
 
   @Get()
   @Public()
-  // @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Get all users (Admin only)',
     description: 'Returns a paginated list of all users. Requires ADMIN role.',
