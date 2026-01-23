@@ -38,6 +38,19 @@ jobs:
       - name: Run Build
         run: npm run build
 
+      - name: Test Production Start
+        run: |
+          npm run start:prod &
+          SERVER_PID=$!
+          sleep 5
+          if kill -0 $SERVER_PID 2>/dev/null; then
+            echo "Production server started successfully"
+            kill $SERVER_PID
+          else
+            echo "Production server failed to start"
+            exit 1
+          fi
+
   lint:
     runs-on: ubuntu-latest
     env:
