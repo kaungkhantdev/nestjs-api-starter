@@ -29,7 +29,9 @@ jobs:
         uses: ./.github/actions/node-setup-action
         with:
             node-version: '22'
-
+      
+      - name: Prisma Generate
+        run: npm run prisma:generate
       - name: Run Build
         run: npm run build
 
