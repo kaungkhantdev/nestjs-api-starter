@@ -16,7 +16,8 @@ datasource db {
 enum UserRole {
   CUSTOMER
   ADMIN
-  VENDOR
+
+  @@map("user_roles")
 }
 
 model User {

@@ -84,7 +84,7 @@ NODE_ENV="development"
 
 4. Run Prisma migrations:
 ```bash
-npm run prisma:migrate:dev
+npm run prisma:migrate:deploy
 ```
 
 5. Generate Prisma client:

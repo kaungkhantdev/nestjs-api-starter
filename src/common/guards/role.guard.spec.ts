@@ -62,23 +62,12 @@ describe('RolesGuard', () => {
     it('should return true when user has one of multiple required roles', () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
-        .mockReturnValue([UserRole.ADMIN, UserRole.VENDOR]);
-      const context = createMockContext(UserRole.VENDOR);
-
-      const result = guard.canActivate(context);
-
-      expect(result).toBe(true);
-    });
-
-    it('should return false when user has none of multiple required roles', () => {
-      jest
-        .spyOn(reflector, 'getAllAndOverride')
-        .mockReturnValue([UserRole.ADMIN, UserRole.VENDOR]);
+        .mockReturnValue([UserRole.ADMIN, UserRole.CUSTOMER]);
       const context = createMockContext(UserRole.CUSTOMER);
 
       const result = guard.canActivate(context);
 
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
 
     it('should handle empty roles array', () => {

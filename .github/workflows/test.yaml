@@ -1,0 +1,118 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+concurrency:
+  group: ${{github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        id: node-setup
+        uses: ./.github/actions/node-setup-action
+        with:
+            node-version: '22'
+
+      - name: Prisma Generate
+        run: npm run prisma:generate
+
+      - name: Run Build
+        run: npm run build
+
+      - name: Test Production Start
+        run: |
+          npm run start:prod &
+          SERVER_PID=$!
+          sleep 5
+          if kill -0 $SERVER_PID 2>/dev/null; then
+            echo "Production server started successfully"
+            kill $SERVER_PID
+          else
+            echo "Production server failed to start"
+            exit 1
+          fi
+
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        id: node-setup
+        uses: ./.github/actions/node-setup-action
+        with:
+            node-version: '22'
+
+      - name: Prisma Generate
+        run: npm run prisma:generate
+
+      - name: Run Lint
+        run: npm run lint
+
+  test:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - lint
+    # services:
+    #   postgres:
+    #     image: postgres:16
+    #     env:
+    #       POSTGRES_USER: postgres
+    #       POSTGRES_PASSWORD: postgres
+    #       POSTGRES_DB: test
+    #     ports:
+    #       - 5432:5432
+    #     options: >-
+    #       --health-cmd="pg_isready"
+    #       --health-interval=10s
+    #       --health-timeout=5s
+    #       --health-retries=3
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        id: node-setup
+        uses: ./.github/actions/node-setup-action
+        with:
+            node-version: '22'
+
+      - name: Prisma Generate
+        run: npm run prisma:generate
+
+      - name: Run Tests
+        run: npm run test
+
+      - name: Run Test Coverage Report
+        run: npm run test:cov
+
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v4
+        with:
+            name: report-test-coverage
+            path: ./coverage

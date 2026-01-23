@@ -28,14 +28,14 @@ export const mockAdmin = {
   updatedAt: new Date('2024-01-01'),
 };
 
-export const mockVendor = {
-  id: 'vendor-123',
-  email: 'vendor@example.com',
-  username: 'vendoruser',
+export const mockCustomer = {
+  id: 'customer-123',
+  email: 'customer@example.com',
+  username: 'customeruser',
   password: '$2b$10$hashedpassword123456789',
-  firstName: 'Vendor',
+  firstName: 'Customer',
   lastName: 'User',
-  role: UserRole.VENDOR,
+  role: UserRole.CUSTOMER,
   isActive: true,
   deletedAt: null,
   createdAt: new Date('2024-01-01'),
@@ -63,7 +63,7 @@ export const mockUserWithoutPassword = {
   updatedAt: mockUser.updatedAt,
 };
 
-export const mockUsers = [mockUser, mockAdmin, mockVendor];
+export const mockUsers = [mockUser, mockAdmin, mockCustomer];
 
 export const createMockUser = (overrides: Partial<typeof mockUser> = {}) => ({
   ...mockUser,
