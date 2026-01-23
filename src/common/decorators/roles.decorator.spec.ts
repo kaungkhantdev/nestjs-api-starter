@@ -11,11 +11,11 @@ describe('Roles Decorator', () => {
   });
 
   it('should set multiple roles metadata', () => {
-    @Roles(UserRole.ADMIN, UserRole.VENDOR)
+    @Roles(UserRole.ADMIN, UserRole.CUSTOMER)
     class TestClass {}
 
     const metadata = Reflect.getMetadata(ROLES_KEY, TestClass);
-    expect(metadata).toEqual([UserRole.ADMIN, UserRole.VENDOR]);
+    expect(metadata).toEqual([UserRole.ADMIN, UserRole.CUSTOMER]);
   });
 
   it('should work on methods', () => {
@@ -23,7 +23,7 @@ describe('Roles Decorator', () => {
       @Roles(UserRole.ADMIN)
       adminMethod(this: void) {}
 
-      @Roles(UserRole.CUSTOMER, UserRole.VENDOR)
+      @Roles(UserRole.CUSTOMER, UserRole.CUSTOMER)
       multiRoleMethod(this: void) {}
 
       publicMethod(this: void) {}
@@ -43,7 +43,7 @@ describe('Roles Decorator', () => {
     );
 
     expect(adminMetadata).toEqual([UserRole.ADMIN]);
-    expect(multiRoleMetadata).toEqual([UserRole.CUSTOMER, UserRole.VENDOR]);
+    expect(multiRoleMetadata).toEqual([UserRole.CUSTOMER, UserRole.CUSTOMER]);
     expect(publicMetadata).toBeUndefined();
   });
 

@@ -18,19 +18,19 @@ export class WriteRepository<T>
   }
 
   async create(data: unknown): Promise<T> {
-    return this.model.create({ data }) as Promise<T>;
+    return this.model.create({ data });
   }
 
   async update(id: string, data: unknown): Promise<T> {
-    return this.model.update({ where: { id }, data }) as Promise<T>;
+    return this.model.update({ where: { id }, data });
   }
 
   async delete(id: string): Promise<T> {
-    return this.model.delete({ where: { id } }) as Promise<T>;
+    return this.model.delete({ where: { id } });
   }
 
   async upsert(where: unknown, create: unknown, update: unknown): Promise<T> {
-    return this.model.upsert({ where, create, update }) as Promise<T>;
+    return this.model.upsert({ where, create, update });
   }
 
   async findOrCreate(where: unknown, create: unknown): Promise<T> {

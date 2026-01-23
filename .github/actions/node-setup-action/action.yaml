@@ -1,0 +1,21 @@
+name: Node Setup Action
+description: Sets up a Node.js environment for use in actions to be reused in workflows
+
+inputs:
+    node-version:
+        description: 'Node.js version to set up'
+        required: false
+        default: '22'
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Set up Node.js
+          uses: actions/setup-node@v4
+          with:
+              node-version: ${{ inputs.node-version }}
+              cache: 'npm'
+
+        - name: Install Dependencies
+          shell: bash
+          run: npm ci

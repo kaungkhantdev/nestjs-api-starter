@@ -21,15 +21,15 @@ export class ReadRepository<T>
     return this.model.findUnique({
       where: { id },
       include,
-    }) as Promise<T | null>;
+    });
   }
 
   async findOne(where: unknown, include?: unknown): Promise<T | null> {
-    return this.model.findFirst({ where, include }) as Promise<T | null>;
+    return this.model.findFirst({ where, include });
   }
 
   async findAll(params?: FindAllParams): Promise<T[]> {
-    return this.model.findMany(params ?? {}) as Promise<T[]>;
+    return this.model.findMany(params ?? {});
   }
 
   async count(where?: unknown): Promise<number> {
