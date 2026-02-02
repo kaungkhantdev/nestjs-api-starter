@@ -18,4 +18,4 @@ runs:
 
         - name: Install Dependencies
           shell: bash
-          run: npm ci
+          run: npm install
