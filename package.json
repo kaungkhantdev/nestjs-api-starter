@@ -1,6 +1,6 @@
 {
   "name": "nestjs-api-starter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "NestJS API starter with Prisma, JWT auth, and Swagger",
   "author": "Kaung Khant Zaw <kaungkhantzaw.dev@gmail.com>",
   "private": false,
