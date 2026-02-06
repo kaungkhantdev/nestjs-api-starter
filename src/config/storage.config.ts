@@ -1,14 +1,27 @@
 export default () => ({
   storage: {
-    provider: process.env.STORAGE_PROVIDER || 's3', // s3, gcs, azure, local
+    provider: process.env.STORAGE_PROVIDER || 's3',
+    maxFileSize:
+      parseInt(process.env.MAX_FILE_SIZE_MB || '10', 10) * 1024 * 1024 ||
+      10 * 1024 * 1024, // 10MB
+    allowedMimeTypes: [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'application/pdf',
+    ],
     s3: {
       region: process.env.AWS_REGION,
       accessKeyId: process.env.AWS_S3_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_S3_KEY,
       bucket: process.env.AWS_S3_BUCKET,
     },
-    // Future providers can be added here:
-    // gcs: { ... },
-    // azure: { ... },
+    azure: {
+      connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+      container: process.env.AZURE_STORAGE_CONTAINER,
+    },
+    local: {
+      path: process.env.LOCAL_STORAGE_PATH || './uploads',
+    },
   },
 });
