@@ -1,8 +1,13 @@
 import { Prisma } from 'generated/prisma/client';
-import { PrismaService } from '@/database/prisma.service';
+import { PrismaService } from '@/core/database/prisma.service';
 import { IBulkRepository, IRepository, ITransactional } from './interfaces';
 import { WriteRepository } from './write.repository';
-import { BatchResult, ModelName } from './types';
+import {
+  BatchResult,
+  DefaultTypeMap,
+  ModelName,
+  RepositoryTypeMap,
+} from './types';
 
 /**
  * Generic Repository
@@ -20,9 +25,9 @@ import { BatchResult, ModelName } from './types';
  * }
  * ```
  */
-export class GenericRepository<T>
-  extends WriteRepository<T>
-  implements IBulkRepository, ITransactional, IRepository<T>
+export class GenericRepository<T, M extends RepositoryTypeMap = DefaultTypeMap>
+  extends WriteRepository<T, M>
+  implements IBulkRepository<M>, ITransactional, IRepository<T, M>
 {
   constructor(prisma: PrismaService, modelName: ModelName) {
     super(prisma, modelName);
@@ -33,18 +38,21 @@ export class GenericRepository<T>
   // ========================================
 
   async createMany(
-    data: unknown[],
+    data: M['CreateInput'][],
     skipDuplicates = true,
   ): Promise<BatchResult> {
-    return this.model.createMany({ data, skipDuplicates });
+    return await this.model.createMany({ data, skipDuplicates });
   }
 
-  async updateMany(where: unknown, data: unknown): Promise<BatchResult> {
-    return this.model.updateMany({ where, data });
+  async updateMany(
+    where: M['WhereInput'],
+    data: M['UpdateInput'],
+  ): Promise<BatchResult> {
+    return await this.model.updateMany({ where, data });
   }
 
-  async deleteMany(where: unknown): Promise<BatchResult> {
-    return this.model.deleteMany({ where });
+  async deleteMany(where: M['WhereInput']): Promise<BatchResult> {
+    return await this.model.deleteMany({ where });
   }
 
   // ========================================
@@ -54,6 +62,6 @@ export class GenericRepository<T>
   async transaction<R>(
     fn: (tx: Prisma.TransactionClient) => Promise<R>,
   ): Promise<R> {
-    return this.prisma.$transaction(fn);
+    return await this.prisma.$transaction(fn);
   }
 }

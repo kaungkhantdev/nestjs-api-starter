@@ -1,5 +1,5 @@
 import { User } from 'generated/prisma/client';
-import { IRepository } from '@/shared/repositories/interfaces';
+import { IRepository } from '@/core/repository';
 
 /**
  * User-specific repository interface

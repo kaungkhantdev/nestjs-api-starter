@@ -21,16 +21,53 @@ export type PrismaDelegate<T = any> = {
 export type ModelName = Prisma.ModelName;
 
 // ============================================
+// Repository Type Map
+// ============================================
+
+/**
+ * Defines the input types for a repository.
+ * Consumers can supply Prisma-generated types for full type safety.
+ *
+ * @example
+ * ```typescript
+ * type UserTypeMap = {
+ *   WhereInput: Prisma.UserWhereInput;
+ *   WhereUniqueInput: Prisma.UserWhereUniqueInput;
+ *   CreateInput: Prisma.UserCreateInput;
+ *   UpdateInput: Prisma.UserUpdateInput;
+ *   OrderByInput: Prisma.UserOrderByWithRelationInput;
+ *   Include: Prisma.UserInclude;
+ *   Select: Prisma.UserSelect;
+ * };
+ * ```
+ */
+export interface RepositoryTypeMap {
+  WhereInput: unknown;
+  WhereUniqueInput: unknown;
+  CreateInput: unknown;
+  UpdateInput: unknown;
+  OrderByInput: unknown;
+  Include: unknown;
+  Select: unknown;
+}
+
+/**
+ * Default type map using unknown for all types.
+ * Used when consumers don't need strict typing.
+ */
+export type DefaultTypeMap = RepositoryTypeMap;
+
+// ============================================
 // Query Types
 // ============================================
 
-export interface FindAllParams {
+export interface FindAllParams<M extends RepositoryTypeMap = DefaultTypeMap> {
   skip?: number;
   take?: number;
-  where?: unknown;
-  orderBy?: unknown;
-  include?: unknown;
-  select?: unknown;
+  where?: M['WhereInput'];
+  orderBy?: M['OrderByInput'];
+  include?: M['Include'];
+  select?: M['Select'];
 }
 
 export interface BatchResult {
