@@ -4,25 +4,32 @@
 
 | Directory    | Purpose                                               | Example                                  |
 | ------------ | ----------------------------------------------------- | ---------------------------------------- |
-| `core/`      | App-level foundations (config, database, base classes) | Config, Prisma, Repository base classes  |
-| `common/`    | Reusable utilities (decorators, pipes, guards)        | `@Public()`, `JwtAuthGuard`, Filters     |
-| `shared/`    | Shared NestJS modules with providers                  | Modules imported by multiple features    |
+| `config/`    | Environment & app configuration                       | App, Database, JWT, Storage configs      |
+| `database/`  | Database setup (Prisma)                               | `PrismaService`, `DatabaseModule`        |
+| `common/`    | Reusable utilities, base classes & cross-cutting concerns | Decorators, Guards, Filters, Repository pattern |
 | `modules/`   | Feature modules (domain logic)                        | Auth, Users                              |
 
 ## Full Structure
 
 ```
 src/
-├── core/                           # App-level foundations
-│   ├── config/                     # Environment & app configuration
-│   │   ├── app.config.ts
-│   │   ├── database.config.ts
-│   │   ├── jwt.config.ts
-│   │   ├── storage.config.ts
-│   │   └── index.ts
-│   ├── database/                   # Prisma setup
-│   │   ├── database.module.ts
-│   │   └── prisma.service.ts
+├── config/                         # Environment & app configuration
+│   ├── app.config.ts
+│   ├── database.config.ts
+│   ├── jwt.config.ts
+│   ├── storage.config.ts
+│   └── index.ts
+│
+├── database/                       # Prisma setup
+│   ├── database.module.ts
+│   └── prisma.service.ts
+│
+├── common/                         # Cross-cutting concerns & reusable base classes
+│   ├── decorators/                 # @Public, @Roles, @CurrentUser
+│   ├── filters/                    # HttpExceptionFilter
+│   ├── guards/                     # JwtAuthGuard, RoleGuard
+│   ├── interceptors/               # TransformInterceptor
+│   ├── interfaces/                 # Response interface
 │   └── repository/                 # Generic repository pattern
 │       ├── interfaces/
 │       │   ├── repository.interfaces.ts
@@ -36,16 +43,6 @@ src/
 │       ├── generic.repository.ts   # Full CRUD + bulk + transactions
 │       ├── soft-deletable.repository.ts
 │       └── index.ts
-│
-├── common/                         # Cross-cutting concerns
-│   ├── decorators/                 # @Public, @Roles, @CurrentUser
-│   ├── filters/                    # HttpExceptionFilter
-│   ├── guards/                     # JwtAuthGuard, RoleGuard
-│   ├── interceptors/               # TransformInterceptor
-│   └── interfaces/                 # Response interface
-│
-├── shared/                         # Shared NestJS modules
-│   └── shared.module.ts
 │
 ├── modules/                        # Feature modules
 │   ├── auth/
@@ -75,9 +72,9 @@ src/
 `@/*` maps to `src/*` (configured in `tsconfig.json`).
 
 ```ts
-import { GenericRepository } from '@/core/repository';
-import { PrismaService } from '@/core/database/prisma.service';
-import configuration from '@/core/config';
+import { GenericRepository } from '@/common/repository';
+import { PrismaService } from '@/database/prisma.service';
+import configuration from '@/config';
 ```
 
 ### Repository Pattern (Inheritance Chain)
@@ -114,14 +111,14 @@ export class UsersRepository extends GenericRepository<User> {
 
 ### Barrel Exports
 
-Each `core/` subdirectory has an `index.ts` barrel file. Always import from the barrel:
+`config/` and `common/repository/` have `index.ts` barrel files. Always import from the barrel:
 
 ```ts
 // Good
-import { GenericRepository, IRepository } from '@/core/repository';
+import { GenericRepository, IRepository } from '@/common/repository';
 
 // Avoid
-import { GenericRepository } from '@/core/repository/generic.repository';
+import { GenericRepository } from '@/common/repository/generic.repository';
 ```
 
 ### Database
@@ -129,7 +126,7 @@ import { GenericRepository } from '@/core/repository/generic.repository';
 - ORM: **Prisma**
 - Schema: `prisma/schema.prisma`
 - Generated client: `generated/prisma/client`
-- Service: `@/core/database/prisma.service`
+- Service: `@/database/prisma.service`
 
 ### Auth
 

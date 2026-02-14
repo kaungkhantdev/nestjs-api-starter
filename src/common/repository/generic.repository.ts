@@ -1,5 +1,5 @@
 import { Prisma } from 'generated/prisma/client';
-import { PrismaService } from '@/core/database/prisma.service';
+import { PrismaService } from '@/database/prisma.service';
 import { IBulkRepository, IRepository, ITransactional } from './interfaces';
 import { WriteRepository } from './write.repository';
 import {

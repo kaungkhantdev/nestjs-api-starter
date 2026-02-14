@@ -1,5 +1,5 @@
-import { PrismaService } from '@/core/database/prisma.service';
-import { GenericRepository } from '@/core/repository';
+import { PrismaService } from '@/database/prisma.service';
+import { GenericRepository } from '@/common/repository';
 import { Injectable } from '@nestjs/common';
 import { Prisma, User } from 'generated/prisma/client';
 import { IUsersRepository } from './users.repository.interface';

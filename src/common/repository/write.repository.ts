@@ -1,4 +1,4 @@
-import { PrismaService } from '@/core/database/prisma.service';
+import { PrismaService } from '@/database/prisma.service';
 import { IWriteRepository } from './interfaces';
 import { ReadRepository } from './read.repository';
 import {

@@ -1,4 +1,4 @@
-import { PrismaService } from '@/core/database/prisma.service';
+import { PrismaService } from '@/database/prisma.service';
 import { ModelName, PrismaDelegate } from './types';
 
 /**
