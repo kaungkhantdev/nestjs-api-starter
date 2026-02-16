@@ -21,7 +21,7 @@ export class S3StorageProvider implements IStorageProvider {
   constructor(config: ConfigService) {
     this.bucket = config.get<string>('storage.s3.bucket') || '';
     this.client = new S3Client({
-      region: config.get<string>('storage.s3.region') || '',
+      region: config.get<string>('storage.s3.region') || 'us-east-1',
       credentials: {
         accessKeyId: config.get<string>('storage.s3.accessKeyId') || '',
         secretAccessKey: config.get<string>('storage.s3.secretAccessKey') || '',

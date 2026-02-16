@@ -13,7 +13,7 @@ import { StorageController } from './storage.controller';
     {
       provide: STORAGE_PROVIDER,
       useFactory: (config: ConfigService) => {
-        const provider = config.get<string>('storage.provider');
+        const provider = config.get<string>('storage.provider') || 'local';
         return provider === 'local'
           ? new LocalStorageProvider(config)
           : new S3StorageProvider(config);
