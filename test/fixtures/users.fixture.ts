@@ -5,6 +5,7 @@ export const mockUser = {
   email: 'test@example.com',
   username: 'testuser',
   password: '$2b$10$hashedpassword123456789',
+  refreshTokenHash: '$2b$10$hashedpassword123456789',
   firstName: 'John',
   lastName: 'Doe',
   role: UserRole.CUSTOMER,
@@ -19,6 +20,7 @@ export const mockAdmin = {
   email: 'admin@example.com',
   username: 'adminuser',
   password: '$2b$10$hashedpassword123456789',
+  refreshTokenHash: '$2b$10$hashedpassword123456789',
   firstName: 'Admin',
   lastName: 'User',
   role: UserRole.ADMIN,
@@ -33,6 +35,7 @@ export const mockCustomer = {
   email: 'customer@example.com',
   username: 'customeruser',
   password: '$2b$10$hashedpassword123456789',
+  refreshTokenHash: '$2b$10$hashedpassword123456789',
   firstName: 'Customer',
   lastName: 'User',
   role: UserRole.CUSTOMER,
@@ -48,6 +51,7 @@ export const mockInactiveUser = {
   email: 'inactive@example.com',
   username: 'inactiveuser',
   isActive: false,
+  refreshTokenHash: null,
 };
 
 export const mockUserWithoutPassword = {
@@ -58,6 +62,7 @@ export const mockUserWithoutPassword = {
   lastName: mockUser.lastName,
   role: mockUser.role,
   isActive: mockUser.isActive,
+  refreshTokenHash: mockUser.refreshTokenHash,
   deletedAt: mockUser.deletedAt,
   createdAt: mockUser.createdAt,
   updatedAt: mockUser.updatedAt,

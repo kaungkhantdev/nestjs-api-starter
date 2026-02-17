@@ -4,13 +4,15 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ErrorResponse } from '../interfaces/response.interface';
-import { randomUUID } from 'crypto';
+import { resolveRequestId } from '../utils/request-id.util';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const request = ctx.getRequest<Request>();
@@ -29,7 +31,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         statusCode: status,
         timestamp: new Date().toISOString(),
         path: request.url,
-        requestId: (request.headers['x-request-id'] as string) || randomUUID(),
+        requestId: resolveRequestId(
+          request.headers['x-request-id'] as string | undefined,
+        ),
       },
     };
 
@@ -65,7 +69,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     // Unhandled exceptions
-    console.error('Unhandled exception:', exception);
+    this.logger.error(
+      'Unhandled exception',
+      exception instanceof Error ? exception.stack : String(exception),
+    );
 
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,

@@ -28,6 +28,7 @@ describe('AuthController', () => {
       login: jest.fn(),
       register: jest.fn(),
       refresh: jest.fn(),
+      logout: jest.fn(),
     };
 
     mockResponse = {
@@ -96,7 +97,7 @@ describe('AuthController', () => {
         registerMockResponse.refreshToken,
         expect.objectContaining({
           httpOnly: true,
-          sameSite: 'lax',
+          sameSite: 'strict',
           path: '/api/v1/auth/refresh',
           maxAge: 7 * 24 * 60 * 60 * 1000,
         }),
@@ -255,8 +256,13 @@ describe('AuthController', () => {
   });
 
   describe('logout', () => {
-    it('should clear refreshToken cookie', () => {
-      const result = controller.logout(mockResponse as Response);
+    it('should clear refreshToken cookie', async () => {
+      authService.logout.mockResolvedValue(undefined);
+
+      const result = await controller.logout(
+        mockUser.id,
+        mockResponse as Response,
+      );
 
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('refreshToken', {
         path: '/api/v1/auth/refresh',
@@ -264,8 +270,13 @@ describe('AuthController', () => {
       expect(result).toEqual({ success: true });
     });
 
-    it('should return success true', () => {
-      const result = controller.logout(mockResponse as Response);
+    it('should return success true', async () => {
+      authService.logout.mockResolvedValue(undefined);
+
+      const result = await controller.logout(
+        mockUser.id,
+        mockResponse as Response,
+      );
 
       expect(result).toHaveProperty('success', true);
     });
@@ -292,6 +303,7 @@ describe('AuthController', () => {
         lastName: mockUser.lastName,
         role: mockUser.role,
         isActive: mockUser.isActive,
+        refreshTokenHash: mockUser.refreshTokenHash,
         createdAt: mockUser.createdAt,
         updatedAt: mockUser.updatedAt,
         deletedAt: mockUser.deletedAt,

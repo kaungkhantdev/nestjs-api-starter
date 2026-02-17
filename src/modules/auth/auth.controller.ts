@@ -27,9 +27,14 @@ import {
   LogoutResponseDto,
 } from './dto/auth.dto';
 import { Public } from '../../common/decorators/public.decorator';
+import {
+  COOKIE_PATHS,
+  REFRESH_TOKEN_MAX_AGE_MS,
+} from '../../common/constants/routes.constant';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from 'generated/prisma/client';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Authentication')
 @Controller({ path: 'auth', version: '1' })
@@ -37,6 +42,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('register')
   @ApiOperation({
     summary: 'Register a new user',
@@ -64,9 +70,9 @@ export class AuthController {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/api/v1/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: 'strict',
+      path: COOKIE_PATHS.authRefresh,
+      maxAge: REFRESH_TOKEN_MAX_AGE_MS,
     });
 
     return {
@@ -76,6 +82,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('login')
   @ApiOperation({
     summary: 'User login',
@@ -104,8 +111,8 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/api/v1/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: COOKIE_PATHS.authRefresh,
+      maxAge: REFRESH_TOKEN_MAX_AGE_MS,
     });
 
     return {
@@ -115,6 +122,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('refresh')
   @ApiOperation({
     summary: 'Refresh access token',
@@ -147,8 +155,8 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/api/v1/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: COOKIE_PATHS.authRefresh,
+      maxAge: REFRESH_TOKEN_MAX_AGE_MS,
     });
 
     return { accessToken };
@@ -156,6 +164,7 @@ export class AuthController {
 
   @Public()
   @Post('logout')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Logout user',
     description: 'Clears the refresh token cookie',
@@ -165,8 +174,12 @@ export class AuthController {
     description: 'Successfully logged out',
     type: LogoutResponseDto,
   })
-  logout(@Res({ passthrough: true }) res: Response): LogoutResponseDto {
-    res.clearCookie('refreshToken', { path: '/api/v1/auth/refresh' });
+  async logout(
+    @CurrentUser('id') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LogoutResponseDto> {
+    await this.authService.logout(userId);
+    res.clearCookie('refreshToken', { path: COOKIE_PATHS.authRefresh });
     return { success: true };
   }
 

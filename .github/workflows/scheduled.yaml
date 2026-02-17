@@ -1,0 +1,122 @@
+name: Scheduled Maintenance
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Every Monday at 9:00 UTC
+  workflow_dispatch:
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: ./.github/actions/node-setup-action
+        with:
+          node-version: "22"
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate || true
+        id: audit
+
+      - name: Create Issue on Vulnerabilities
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `[Automated] npm audit found vulnerabilities - ${new Date().toISOString().split('T')[0]}`;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'security,automated',
+              state: 'open',
+            });
+            if (issues.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body: 'The weekly `npm audit` found vulnerabilities. Please run `npm audit` locally and address the findings.',
+                labels: ['security', 'automated'],
+              });
+            }
+
+  docker-scan:
+    name: Docker Image Security Scan
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: |
+            DATABASE_URL=${{ env.DATABASE_URL }}
+          push: false
+          load: true
+          tags: ecommerce-api:scan
+
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ecommerce-api:scan
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+  stale-branches:
+    name: Stale Branch Report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find Stale Branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const { data: branches } = await github.rest.repos.listBranches({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+
+            const staleBranches = [];
+
+            for (const branch of branches) {
+              if (branch.name === 'main' || branch.name === 'develop') continue;
+
+              const { data: commit } = await github.rest.repos.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: branch.commit.sha,
+              });
+
+              const commitDate = new Date(commit.commit.committer.date);
+              if (commitDate < thirtyDaysAgo) {
+                const daysAgo = Math.floor((Date.now() - commitDate) / (1000 * 60 * 60 * 24));
+                staleBranches.push(`- \`${branch.name}\` (last commit: ${daysAgo} days ago)`);
+              }
+            }
+
+            if (staleBranches.length > 0) {
+              core.warning(`Found ${staleBranches.length} stale branches:\n${staleBranches.join('\n')}`);
+            } else {
+              core.info('No stale branches found.');
+            }

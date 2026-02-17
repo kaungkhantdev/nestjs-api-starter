@@ -1,7 +1,13 @@
 import { PrismaService } from '@/database/prisma.service';
 import { GenericRepository } from './generic.repository';
 import { ISoftDeletable } from './interfaces';
-import { FindAllParams, ModelName, SoftDeletableEntity } from './types';
+import {
+  DefaultTypeMap,
+  FindAllParams,
+  ModelName,
+  RepositoryTypeMap,
+  SoftDeletableEntity,
+} from './types';
 
 /**
  * Soft-Deletable Repository
@@ -29,9 +35,12 @@ import { FindAllParams, ModelName, SoftDeletableEntity } from './types';
  * }
  * ```
  */
-export class SoftDeletableRepository<T extends SoftDeletableEntity>
-  extends GenericRepository<T>
-  implements ISoftDeletable<T>
+export class SoftDeletableRepository<
+  T extends SoftDeletableEntity,
+  M extends RepositoryTypeMap = DefaultTypeMap,
+>
+  extends GenericRepository<T, M>
+  implements ISoftDeletable<T, M>
 {
   constructor(prisma: PrismaService, modelName: ModelName) {
     super(prisma, modelName);
@@ -42,18 +51,18 @@ export class SoftDeletableRepository<T extends SoftDeletableEntity>
   // ========================================
 
   async softDelete(id: string): Promise<T> {
-    return this.update(id, { deletedAt: new Date() } as unknown);
+    return await this.update(id, { deletedAt: new Date() } as M['UpdateInput']);
   }
 
   async restore(id: string): Promise<T> {
-    return this.update(id, { deletedAt: null } as unknown);
+    return await this.update(id, { deletedAt: null } as M['UpdateInput']);
   }
 
   /**
    * Find all records including soft-deleted ones
    */
-  async findAllWithDeleted(params?: FindAllParams): Promise<T[]> {
-    return super.findAll(params);
+  async findAllWithDeleted(params?: FindAllParams<M>): Promise<T[]> {
+    return await super.findAll(params);
   }
 
   // ========================================
@@ -63,26 +72,58 @@ export class SoftDeletableRepository<T extends SoftDeletableEntity>
   /**
    * Find all active (non-deleted) records
    */
-  override async findAll(params?: FindAllParams): Promise<T[]> {
+  override async findAll(params?: FindAllParams<M>): Promise<T[]> {
     const where = {
       ...(params?.where as Record<string, unknown>),
       deletedAt: null,
     };
-    return super.findAll({ ...params, where });
+    return await super.findAll({ ...params, where } as FindAllParams<M>);
   }
 
   /**
    * Find by ID only if not soft-deleted
    */
-  override async findById(id: string, include?: unknown): Promise<T | null> {
-    return this.findOne({ id, deletedAt: null }, include);
+  override async findById(
+    id: string,
+    options?: { include?: M['Include']; select?: M['Select'] },
+  ): Promise<T | null> {
+    return await this.findOne(
+      { id, deletedAt: null } as M['WhereInput'],
+      options,
+    );
+  }
+
+  /**
+   * Find one active (non-deleted) record matching the criteria
+   */
+  override async findOne(
+    where: M['WhereInput'],
+    options?: { include?: M['Include']; select?: M['Select'] },
+  ): Promise<T | null> {
+    return await super.findOne(
+      {
+        ...(where as Record<string, unknown>),
+        deletedAt: null,
+      } as M['WhereInput'],
+      options,
+    );
+  }
+
+  /**
+   * Count only active (non-deleted) records
+   */
+  override async count(where?: M['WhereInput']): Promise<number> {
+    return await super.count({
+      ...(where as Record<string, unknown>),
+      deletedAt: null,
+    } as M['WhereInput']);
   }
 
   /**
    * Check existence only for non-deleted records
    */
   override async exists(id: string): Promise<boolean> {
-    const result = await this.count({ id, deletedAt: null });
+    const result = await this.count({ id } as M['WhereInput']);
     return result > 0;
   }
 }

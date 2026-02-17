@@ -21,15 +21,13 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import {
-  // UpdateUserDto,
-  UserResponseDto,
-} from './dto/users.dto';
+import { UserResponseDto } from './dto/users.response.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { UserRole } from 'generated/prisma/enums';
+import { plainToInstance } from 'class-transformer';
 @ApiTags('Users')
 @ApiBearerAuth('JWT-auth')
 @Controller({ path: 'users', version: '1' })
@@ -58,8 +56,9 @@ export class UsersController {
   ): Promise<UserResponseDto> {
     const user = await this.usersService.getFindById(userId);
     if (!user) throw new BadRequestException('Not found user');
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
+    const result = plainToInstance(UserResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
     return result;
   }
 
@@ -129,8 +128,9 @@ export class UsersController {
   async findOne(@Param('id') id: string): Promise<UserResponseDto> {
     const user = await this.usersService.getFindById(id);
     if (!user) throw new BadRequestException('Not found user');
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
+    const result = plainToInstance(UserResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
     return result;
   }
 
