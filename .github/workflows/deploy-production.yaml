@@ -66,17 +66,3 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Deploy via SSH
-        env:
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST_PRODUCTION }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          IMAGE_TAG: sha-${{ github.sha }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        run: |
-          echo "$DEPLOY_SSH_KEY" > deploy_key.pem
-          chmod 400 deploy_key.pem
-          ssh -o StrictHostKeyChecking=no -i deploy_key.pem "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "bash -s" < ./scripts/deploy.sh "$IMAGE_TAG" "production" "$DOCKERHUB_USERNAME"
-          rm -f deploy_key.pem
