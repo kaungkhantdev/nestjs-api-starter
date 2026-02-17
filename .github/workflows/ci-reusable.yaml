@@ -5,10 +5,15 @@ on:
     secrets:
       DATABASE_URL:
         required: true
+      JWT_SECRET:
+        required: true
+      JWT_REFRESH_SECRET:
+        required: true
 
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  STRIPE_SECRET_KEY: "dummy-key"
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
 
 jobs:
   lint:

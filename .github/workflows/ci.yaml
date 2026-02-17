@@ -17,3 +17,6 @@ jobs:
     uses: ./.github/workflows/ci-reusable.yaml
     secrets:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+      
