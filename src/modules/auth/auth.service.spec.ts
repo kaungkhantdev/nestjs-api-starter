@@ -26,6 +26,8 @@ describe('AuthService', () => {
       getUserByEmail: jest.fn(),
       createUser: jest.fn(),
       getFindById: jest.fn(),
+      setRefreshTokenHash: jest.fn(),
+      clearRefreshTokenHash: jest.fn(),
     };
 
     const mockJwtService = {
@@ -69,6 +71,7 @@ describe('AuthService', () => {
 
     it('should return auth response with tokens for valid credentials', async () => {
       usersService.getUserByUsername.mockResolvedValue(mockUser);
+      usersService.setRefreshTokenHash.mockResolvedValue(undefined);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.login(loginDto);
@@ -143,6 +146,8 @@ describe('AuthService', () => {
     it('should create user and return auth response with tokens', async () => {
       const hashedPassword = 'hashed-password';
       usersService.getUserByEmail.mockResolvedValue(null);
+      usersService.getUserByUsername.mockResolvedValue(null);
+      usersService.setRefreshTokenHash.mockResolvedValue(undefined);
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
       const newUser = {
         ...mockUser,
@@ -179,12 +184,13 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when email already exists', async () => {
       usersService.getUserByEmail.mockResolvedValue(mockUser);
+      usersService.getUserByUsername.mockResolvedValue(null);
 
       await expect(service.register(registerDto)).rejects.toThrow(
         BadRequestException,
       );
       await expect(service.register(registerDto)).rejects.toThrow(
-        'User already exists',
+        'Email is already registered',
       );
       expect(bcrypt.hash).not.toHaveBeenCalled();
       expect(usersService.createUser).not.toHaveBeenCalled();
@@ -193,6 +199,8 @@ describe('AuthService', () => {
     it('should hash password with correct salt rounds', async () => {
       const hashedPassword = 'hashed-password';
       usersService.getUserByEmail.mockResolvedValue(null);
+      usersService.getUserByUsername.mockResolvedValue(null);
+      usersService.setRefreshTokenHash.mockResolvedValue(undefined);
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
       usersService.createUser.mockResolvedValue(mockUser);
 
@@ -257,6 +265,8 @@ describe('AuthService', () => {
 
       jwtService.verify.mockReturnValue(mockPayload);
       usersService.getFindById.mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      usersService.setRefreshTokenHash.mockResolvedValue(undefined);
 
       const result = await service.refresh(validRefreshToken);
 

@@ -1,365 +1,250 @@
-# Central File Upload Module
+# Storage Module Guide
 
-## Context
+A provider-agnostic file storage module using the strategy pattern. Supports AWS S3 and local disk out of the box. The module is `@Global()`, so `StorageService` is available everywhere without importing `StorageModule`.
 
-Storage config (`storage.config.ts`) and AWS S3 SDK are already in place. This is a provider-agnostic `StorageModule` using the strategy pattern.
+---
 
 ## Module Structure
 
 ```
-src/shared/storage/
-├── interfaces/
-│   └── storage-provider.interface.ts   # IStorageProvider, UploadResult, STORAGE_PROVIDER token
-├── providers/
-│   ├── s3-storage.provider.ts          # S3StorageProvider
-│   └── local-storage.provider.ts       # LocalStorageProvider
-├── utils/
-│   └── build-key.util.ts              # buildKey() helper
-├── storage.service.ts                  # Validates files, delegates to active provider
-├── storage.controller.ts               # Upload / delete / get-url endpoints
-└── storage.module.ts                   # Global module, factory-selects provider from config
+src/
+├── common/utils/
+│   └── build-key.util.ts                   # UUID-based key builder (shared util)
+├── config/
+│   └── storage.config.ts                   # Reads env vars, sets defaults
+└── shared/storage/
+    ├── interfaces/
+    │   └── storage-provider.interface.ts   # IStorageProvider, UploadResult, STORAGE_PROVIDER token
+    ├── providers/
+    │   ├── s3-storage.provider.ts          # AWS S3 implementation
+    │   └── local-storage.provider.ts       # Local disk implementation
+    ├── storage.service.ts                  # Validates files, delegates to active provider
+    ├── storage.controller.ts               # HTTP upload / delete / get-url endpoints
+    └── storage.module.ts                   # Global module, factory-selects provider from config
 ```
 
-## Design
+---
 
-- **Strategy pattern** — `IStorageProvider` interface with implementations (S3, Local)
-- **Factory provider** — reads `STORAGE_PROVIDER` env var at startup, instantiates the matching provider
-- **`@Global()` module** — any module can inject `StorageService` without importing
-- **`@Injectable()` providers** — all providers are decorated with `@Injectable()` for NestJS DI compatibility
-- **Validation** — checks file size and mime type from existing `storage.config.ts`
-- **Multer** — controller uses `FileInterceptor` / `FilesInterceptor` for multipart handling
+## Configuration
 
-## Multer Type Note
+All config is read from environment variables via `src/config/storage.config.ts`.
 
-You may see `Namespace 'global.Express' has no exported member 'Multer'` in your IDE. This is a VSCode-only issue — `tsc` compiles cleanly. The `@types/multer` package augments the global `Express` namespace, but VSCode's TS server sometimes fails to resolve it.
+### Environment Variables
 
-**Fix:** If the IDE error persists after restarting the TS server (`Cmd+Shift+P` → `TypeScript: Restart TS Server`), add a type reference file:
+| Variable             | Default      | Description                                 |
+|----------------------|--------------|---------------------------------------------|
+| `STORAGE_PROVIDER`   | `s3`         | Active provider: `s3` or `local`            |
+| `MAX_FILE_SIZE_MB`   | `10`         | Maximum upload size in MB                   |
+| `AWS_REGION`         | —            | S3 region (S3 only)                         |
+| `AWS_S3_KEY_ID`      | —            | AWS access key ID (S3 only)                 |
+| `AWS_SECRET_S3_KEY`  | —            | AWS secret access key (S3 only)             |
+| `AWS_S3_BUCKET`      | —            | S3 bucket name (S3 only)                    |
+| `LOCAL_STORAGE_PATH` | `./uploads`  | Absolute or relative base path (local only) |
 
-```ts
-// src/types/global.d.ts
-import 'multer';
+### Allowed MIME Types (hardcoded defaults)
+
+- `image/jpeg`
+- `image/png`
+- `image/webp`
+- `application/pdf`
+
+To extend the list, update `allowedMimeTypes` in [src/config/storage.config.ts](src/config/storage.config.ts).
+
+### Example `.env`
+
+```env
+# Use local disk during development
+STORAGE_PROVIDER=local
+MAX_FILE_SIZE_MB=5
+LOCAL_STORAGE_PATH=./uploads
+
+# Use S3 in production
+# STORAGE_PROVIDER=s3
+# AWS_REGION=us-east-1
+# AWS_S3_KEY_ID=AKIA...
+# AWS_SECRET_S3_KEY=...
+# AWS_S3_BUCKET=my-bucket
 ```
 
-## API Endpoints
+---
 
-| Method   | Path                              | Description           | Auth |
-|----------|-----------------------------------|-----------------------|------|
-| `POST`   | `/api/v1/storage/upload`          | Upload single file    | JWT  |
-| `POST`   | `/api/v1/storage/upload/multiple` | Upload multiple files | JWT  |
-| `DELETE` | `/api/v1/storage/:key`            | Delete file by key    | JWT  |
-| `GET`    | `/api/v1/storage/url/:key`        | Get download URL      | JWT  |
+## How to Use
 
-## Usage by Other Modules
+### Inject StorageService into any service
+
+Because `StorageModule` is `@Global()`, you only need to inject `StorageService` — no module import required.
 
 ```ts
-constructor(private readonly storageService: StorageService) {}
+import { StorageService } from '@/shared/storage/storage.service';
+import { UploadResult } from '@/shared/storage/interfaces/storage-provider.interface';
 
-async uploadAvatar(file: Express.Multer.File) {
-  return this.storageService.upload(file, 'avatars');
+@Injectable()
+export class UsersService {
+  constructor(private readonly storageService: StorageService) {}
+
+  async uploadAvatar(file: Express.Multer.File): Promise<UploadResult> {
+    // Upload to the 'avatars' folder
+    return this.storageService.upload(file, 'avatars');
+  }
+
+  async removeAvatar(key: string): Promise<void> {
+    await this.storageService.delete(key);
+  }
+
+  async getAvatarUrl(key: string): Promise<string> {
+    return this.storageService.getUrl(key);
+  }
+}
+```
+
+### Accept file uploads in a controller
+
+```ts
+import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Post('avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadAvatar(@UploadedFile() file: Express.Multer.File) {
+    return this.usersService.uploadAvatar(file);
+  }
+}
+```
+
+### StorageService API
+
+| Method                                   | Returns                 | Description                                   |
+|------------------------------------------|-------------------------|-----------------------------------------------|
+| `upload(file, folder?)`                  | `Promise<UploadResult>` | Validates then uploads; throws on rule breach |
+| `delete(key)`                            | `Promise<void>`         | Deletes file by its storage key               |
+| `getUrl(key)`                            | `Promise<string>`       | Returns a download URL (signed for S3)        |
+
+**`UploadResult` shape:**
+
+```ts
+{
+  key: string;      // Storage path, e.g. "avatars/uuid.jpg"
+  url: string;      // Download URL (signed URL for S3, /uploads/... for local)
+  mimetype: string; // Detected MIME type
+  size: number;     // File size in bytes
+}
+```
+
+**Validation errors thrown by `upload()`:**
+
+- `400 Bad Request` — file exceeds `MAX_FILE_SIZE_MB`
+- `400 Bad Request` — MIME type not in `allowedMimeTypes`
+
+---
+
+## HTTP API
+
+All endpoints require a valid JWT (`Authorization: Bearer <token>`).
+
+| Method   | Path                              | Body / Params                       | Description              |
+|----------|-----------------------------------|-------------------------------------|--------------------------|
+| `POST`   | `/api/v1/storage/upload`          | `multipart/form-data` field `file`  | Upload a single file     |
+| `POST`   | `/api/v1/storage/upload/multiple` | `multipart/form-data` field `files` | Upload up to 10 files    |
+| `DELETE` | `/api/v1/storage/:key`            | Path param `key`                    | Delete file by key       |
+| `GET`    | `/api/v1/storage/url/:key`        | Path param `key`                    | Get download URL for key |
+
+Both upload endpoints accept an optional `?folder=<name>` query parameter to place the file in a subfolder.
+
+### Example: upload with curl
+
+```bash
+# Single file
+curl -X POST https://api.example.com/api/v1/storage/upload \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@/path/to/photo.jpg" \
+  -F "" \
+  "?folder=avatars"
+
+# Multiple files
+curl -X POST https://api.example.com/api/v1/storage/upload/multiple \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "files=@photo1.jpg" \
+  -F "files=@photo2.jpg"
+```
+
+### Example response
+
+```json
+{
+  "key": "avatars/550e8400-e29b-41d4-a716-446655440000.jpg",
+  "url": "https://bucket.s3.amazonaws.com/avatars/550e...?X-Amz-Signature=...",
+  "mimetype": "image/jpeg",
+  "size": 204800
 }
 ```
 
 ---
 
-## Code
+## Providers
 
-### `interfaces/storage-provider.interface.ts`
+### S3 Provider
 
-```ts
-export const STORAGE_PROVIDER = Symbol('IStorageProvider');
+- Uses `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner`.
+- Keys are built by `buildKey()`: `{folder}/{uuid}-{originalname}`.
+- `getUrl()` returns a **pre-signed URL** valid for **1 hour** (`expiresIn: 3600`).
+- Deletes use `DeleteObjectCommand` — no soft delete.
 
-export interface UploadResult {
-  key: string;
-  url: string;
-  mimetype: string;
-  size: number;
-}
+### Local Provider
 
-export interface IStorageProvider {
-  upload(file: Express.Multer.File, folder?: string): Promise<UploadResult>;
-  delete(key: string): Promise<void>;
-  getUrl(key: string): Promise<string> | string;
-}
-```
+- Writes files to `LOCAL_STORAGE_PATH` (default `./uploads`).
+- Uses UUID-only filenames (`{uuid}.{ext}`) derived from the MIME type — the original filename is never persisted to disk.
+- `getUrl()` returns a static path `/uploads/{key}`. Serve this directory with a static file middleware or reverse proxy.
+- Path traversal is blocked: any key or folder that resolves outside `basePath` throws a `400`.
 
-### `utils/build-key.util.ts`
+---
 
-```ts
-import { randomUUID } from 'crypto';
+## Implementing a New Provider
 
-export function buildKey(originalname: string, folder?: string): string {
-  const name = `${randomUUID()}-${originalname}`;
-  return folder ? `${folder}/${name}` : name;
-}
-```
-
-### `providers/s3-storage.provider.ts`
-
-```ts
-import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from '@aws-sdk/client-s3';
-import {
-  IStorageProvider,
-  UploadResult,
-} from '../interfaces/storage-provider.interface';
-import { ConfigService } from '@nestjs/config';
-import { buildKey } from '../utils/build-key.util';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Injectable } from '@nestjs/common';
-
-@Injectable()
-export class S3StorageProvider implements IStorageProvider {
-  private readonly client: S3Client;
-  private readonly bucket: string;
-
-  constructor(config: ConfigService) {
-    this.bucket = config.get<string>('storage.s3.bucket') || '';
-    this.client = new S3Client({
-      region: config.get<string>('storage.s3.region') || '',
-      credentials: {
-        accessKeyId: config.get<string>('storage.s3.accessKeyId') || '',
-        secretAccessKey: config.get<string>('storage.s3.secretAccessKey') || '',
-      },
-    });
-  }
-
-  async upload(file: Express.Multer.File, folder?: string): Promise<UploadResult> {
-    const key = buildKey(file.originalname, folder);
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-      }),
-    );
-    return { key, url: await this.getUrl(key), mimetype: file.mimetype, size: file.size };
-  }
-
-  async delete(key: string): Promise<void> {
-    await this.client.send(
-      new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
-    );
-  }
-
-  async getUrl(key: string): Promise<string> {
-    return getSignedUrl(
-      this.client,
-      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-      { expiresIn: 3600 },
-    );
-  }
-}
-```
-
-### `providers/local-storage.provider.ts`
+1. Create `src/shared/storage/providers/my-storage.provider.ts` and implement `IStorageProvider`:
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import {
-  IStorageProvider,
-  UploadResult,
-} from '../interfaces/storage-provider.interface';
-import * as path from 'path';
-import * as fs from 'fs/promises';
-import { randomUUID } from 'crypto';
+import { IStorageProvider, UploadResult } from '../interfaces/storage-provider.interface';
 
 @Injectable()
-export class LocalStorageProvider implements IStorageProvider {
-  private readonly basePath: string;
-
-  constructor(config: ConfigService) {
-    this.basePath = config.get<string>('storage.local.path') || './uploads';
-  }
-
+export class MyStorageProvider implements IStorageProvider {
   async upload(file: Express.Multer.File, folder?: string): Promise<UploadResult> {
-    const dir = folder ? path.join(this.basePath, folder) : this.basePath;
-    await fs.mkdir(dir, { recursive: true });
-
-    const filename = `${randomUUID()}-${file.originalname}`;
-    await fs.writeFile(path.join(dir, filename), file.buffer);
-
-    const key = folder ? `${folder}/${filename}` : filename;
-    return { key, url: `/uploads/${key}`, mimetype: file.mimetype, size: file.size };
+    // ...
   }
 
   async delete(key: string): Promise<void> {
-    await fs.unlink(path.join(this.basePath, key));
+    // ...
   }
 
   getUrl(key: string): string {
-    return `/uploads/${key}`;
+    // ...
   }
 }
 ```
 
-### `storage.service.ts`
+2. Register it in [src/shared/storage/storage.module.ts](src/shared/storage/storage.module.ts) inside the factory:
 
 ```ts
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import {
-  IStorageProvider,
-  STORAGE_PROVIDER,
-  UploadResult,
-} from './interfaces/storage-provider.interface';
-import { ConfigService } from '@nestjs/config';
-
-@Injectable()
-export class StorageService {
-  private readonly maxFileSize: number;
-  private readonly allowedMimeTypes: string[];
-
-  constructor(
-    @Inject(STORAGE_PROVIDER)
-    private readonly provider: IStorageProvider,
-    private readonly config: ConfigService,
-  ) {
-    this.maxFileSize = this.config.get<number>('storage.maxFileSize') || 5;
-    this.allowedMimeTypes =
-      this.config.get<string[]>('storage.allowedMimeTypes') || [];
-  }
-
-  async upload(file: Express.Multer.File, folder?: string): Promise<UploadResult> {
-    if (file.size > this.maxFileSize) {
-      throw new BadRequestException(
-        `File size exceeds the limit of ${this.maxFileSize / (1024 * 1024)}MB`,
-      );
-    }
-    if (!this.allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        `File type '${file.mimetype}' is not allowed`,
-      );
-    }
-    return this.provider.upload(file, folder);
-  }
-
-  async delete(key: string): Promise<void> {
-    return this.provider.delete(key);
-  }
-
-  async getUrl(key: string): Promise<string> {
-    return this.provider.getUrl(key);
-  }
-}
+return provider === 'my-provider'
+  ? new MyStorageProvider(config)
+  : new S3StorageProvider(config);
 ```
 
-### `storage.controller.ts`
+3. Set `STORAGE_PROVIDER=my-provider` in your environment.
+
+---
+
+## Multer Type Note
+
+You may see `Namespace 'global.Express' has no exported member 'Multer'` in the IDE. This is a VSCode-only issue — `tsc` compiles cleanly. `@types/multer` augments the global `Express` namespace, but VSCode's TS server sometimes fails to resolve it.
+
+**Fix:** Restart the TS server (`Cmd+Shift+P` → `TypeScript: Restart TS Server`). If the error persists, add a type reference file:
 
 ```ts
-import {
-  Controller, Post, Delete, Get, Param, Query,
-  UseGuards, UseInterceptors, UploadedFile, UploadedFiles,
-} from '@nestjs/common';
-import {
-  ApiTags, ApiOperation, ApiResponse, ApiBearerAuth,
-  ApiConsumes, ApiBody, ApiQuery, ApiParam,
-} from '@nestjs/swagger';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/guards/role.guard';
-import { StorageService } from './storage.service';
-
-@ApiTags('Storage')
-@ApiBearerAuth('JWT-auth')
-@Controller({ path: 'storage', version: '1' })
-@UseGuards(JwtAuthGuard, RolesGuard)
-export class StorageController {
-  constructor(private readonly storageService: StorageService) {}
-
-  @Post('upload')
-  @ApiOperation({ summary: 'Upload a single file' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: { file: { type: 'string', format: 'binary' } },
-    },
-  })
-  @ApiQuery({ name: 'folder', required: false, type: String })
-  @ApiResponse({ status: 201, description: 'File uploaded successfully' })
-  @UseInterceptors(FileInterceptor('file'))
-  async upload(
-    @UploadedFile() file: Express.Multer.File,
-    @Query('folder') folder?: string,
-  ) {
-    return this.storageService.upload(file, folder);
-  }
-
-  @Post('upload/multiple')
-  @ApiOperation({ summary: 'Upload multiple files' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        files: { type: 'array', items: { type: 'string', format: 'binary' } },
-      },
-    },
-  })
-  @ApiQuery({ name: 'folder', required: false, type: String })
-  @ApiResponse({ status: 201, description: 'Files uploaded successfully' })
-  @UseInterceptors(FilesInterceptor('files', 10))
-  async uploadMultiple(
-    @UploadedFiles() files: Express.Multer.File[],
-    @Query('folder') folder?: string,
-  ) {
-    return Promise.all(
-      files.map((file) => this.storageService.upload(file, folder)),
-    );
-  }
-
-  @Delete(':key')
-  @ApiOperation({ summary: 'Delete a file by key' })
-  @ApiParam({ name: 'key', type: String })
-  @ApiResponse({ status: 200, description: 'File deleted successfully' })
-  async delete(@Param('key') key: string) {
-    await this.storageService.delete(key);
-    return { message: 'File deleted successfully' };
-  }
-
-  @Get('url/:key')
-  @ApiOperation({ summary: 'Get download URL for a file' })
-  @ApiParam({ name: 'key', type: String })
-  @ApiResponse({ status: 200, description: 'URL retrieved successfully' })
-  async getUrl(@Param('key') key: string) {
-    return { url: await this.storageService.getUrl(key) };
-  }
-}
-```
-
-### `storage.module.ts`
-
-```ts
-import { Global, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { STORAGE_PROVIDER } from './interfaces/storage-provider.interface';
-import { S3StorageProvider } from './providers/s3-storage.provider';
-import { LocalStorageProvider } from './providers/local-storage.provider';
-import { StorageService } from './storage.service';
-import { StorageController } from './storage.controller';
-
-@Global()
-@Module({
-  controllers: [StorageController],
-  providers: [
-    {
-      provide: STORAGE_PROVIDER,
-      useFactory: (config: ConfigService) => {
-        const provider = config.get<string>('storage.provider');
-        return provider === 'local'
-          ? new LocalStorageProvider(config)
-          : new S3StorageProvider(config);
-      },
-      inject: [ConfigService],
-    },
-    StorageService,
-  ],
-  exports: [StorageService],
-})
-export class StorageModule {}
+// src/types/global.d.ts
+import 'multer';
 ```

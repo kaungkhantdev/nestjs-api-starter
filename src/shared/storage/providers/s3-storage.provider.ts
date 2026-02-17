@@ -9,7 +9,7 @@ import {
   UploadResult,
 } from '../interfaces/storage-provider.interface';
 import { ConfigService } from '@nestjs/config';
-import { buildKey } from '../utils/build-key.util';
+import { buildKey } from '../../../common/utils/build-key.util';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 

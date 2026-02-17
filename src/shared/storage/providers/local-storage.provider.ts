@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   IStorageProvider,
@@ -8,6 +8,8 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { randomUUID } from 'crypto';
 
+// Allowed folder name pattern — alphanumeric, hyphens, underscores, forward slash
+const SAFE_FOLDER_PATTERN = /^[a-zA-Z0-9_\-/]+$/;
 @Injectable()
 export class LocalStorageProvider implements IStorageProvider {
   private readonly basePath: string;
@@ -16,14 +18,42 @@ export class LocalStorageProvider implements IStorageProvider {
     this.basePath = config.get<string>('storage.local.path') || './uploads';
   }
 
+  private safePath(userInput: string): string {
+    const resolved = path.resolve(this.basePath, userInput);
+    if (
+      !resolved.startsWith(this.basePath + path.sep) &&
+      resolved !== this.basePath
+    ) {
+      throw new BadRequestException('Invalid file path');
+    }
+    return resolved;
+  }
+
+  private safeExtension(mimetype: string): string {
+    const map: Record<string, string> = {
+      'image/jpeg': '.jpg',
+      'image/png': '.png',
+      'image/gif': '.gif',
+      'image/webp': '.webp',
+      'application/pdf': '.pdf',
+    };
+    return map[mimetype] ?? '';
+  }
+
   async upload(
     file: Express.Multer.File,
     folder?: string,
   ): Promise<UploadResult> {
-    const dir = folder ? path.join(this.basePath, folder) : this.basePath;
+    if (folder && !SAFE_FOLDER_PATTERN.test(folder)) {
+      throw new BadRequestException('Invalid folder name');
+    }
+
+    const dir = folder ? this.safePath(folder) : this.basePath;
     await fs.mkdir(dir, { recursive: true });
 
-    const filename = `${randomUUID()}-${file.originalname}`;
+    // Use UUID-only filename
+    const ext = this.safeExtension(file.mimetype);
+    const filename = `${randomUUID()}${ext}`;
     await fs.writeFile(path.join(dir, filename), file.buffer);
 
     const key = folder ? `${folder}/${filename}` : filename;
@@ -36,10 +66,11 @@ export class LocalStorageProvider implements IStorageProvider {
   }
 
   async delete(key: string): Promise<void> {
-    await fs.unlink(path.join(this.basePath, key));
+    await fs.unlink(this.safePath(key));
   }
 
   getUrl(key: string): string {
+    this.safePath(key);
     return `/uploads/${key}`;
   }
 }

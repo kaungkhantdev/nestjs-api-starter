@@ -9,6 +9,8 @@ import {
   mockUsers,
   createMockUser,
 } from '../../../test/fixtures/users.fixture';
+import { plainToInstance } from 'class-transformer';
+import { UserResponseDto } from './dto/users.response.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -170,7 +172,12 @@ describe('UsersService', () => {
     });
 
     it('should skip email check when email is not provided', async () => {
-      const userDataWithoutEmail = { ...userData, email: undefined };
+      const userDataWithoutEmail = {
+        username: 'newuser',
+        password: 'hashedpassword',
+        firstName: 'New',
+        lastName: 'User',
+      } as any;
       const newUser = createMockUser({ id: 'new-id' });
       userRepository.create.mockResolvedValue(newUser);
 
@@ -195,7 +202,9 @@ describe('UsersService', () => {
       });
       expect(userRepository.count).toHaveBeenCalled();
       expect(result).toEqual({
-        items: mockUsers,
+        items: plainToInstance(UserResponseDto, mockUsers, {
+          excludeExtraneousValues: true,
+        }),
         page: 1,
         limit: 10,
         total: totalCount,
@@ -233,7 +242,9 @@ describe('UsersService', () => {
         take: 10,
       });
       expect(result).toEqual({
-        items: mockUsers,
+        items: plainToInstance(UserResponseDto, mockUsers, {
+          excludeExtraneousValues: true,
+        }),
         page: 2,
         limit: 10,
         total: totalCount,

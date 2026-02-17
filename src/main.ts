@@ -5,12 +5,16 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Cookie parser middleware
   app.use(cookieParser());
+
+  // Security headers
+  app.use(helmet());
 
   // Versioning
   app.enableVersioning({
@@ -32,8 +36,13 @@ async function bootstrap() {
   );
 
   // Cors
+  const frontendUrl = process.env.FRONTEND_URL?.split(',') || [];
+  if (!frontendUrl.length) {
+    throw new Error('FRONTEND_URL environment variable is required');
+  }
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL,
+    origin: frontendUrl,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -45,32 +54,35 @@ async function bootstrap() {
   // Global interceptors
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  // Swagger configuration
-  const config = new DocumentBuilder()
-    .setTitle('API')
-    .setDescription('API documentation')
-    .setVersion('1.1.1')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'JWT',
-        description: 'Enter JWT token',
-        in: 'header',
-      },
-      'JWT-auth',
-    )
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
-
+  // Port
   const port = process.env.PORT || 3000;
-  await app.listen(port);
 
+  // Swagger - only available outside production
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('API')
+      .setDescription('API documentation')
+      .setVersion('1.1.1')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'JWT',
+          description: 'Enter JWT token',
+          in: 'header',
+        },
+        'JWT-auth',
+      )
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+    console.log(
+      `Swagger documentation available at: http://localhost:${port}/api`,
+    );
+  }
+
+  await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
-  console.log(
-    `Swagger documentation available at: http://localhost:${port}/api`,
-  );
 }
 bootstrap();

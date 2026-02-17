@@ -5,7 +5,6 @@ import {
   UploadResult,
 } from './interfaces/storage-provider.interface';
 import { ConfigService } from '@nestjs/config';
-
 @Injectable()
 export class StorageService {
   private readonly maxFileSize: number;
@@ -35,6 +34,7 @@ export class StorageService {
         `File type '${file.mimetype}' is not allowed`,
       );
     }
+
     return this.provider.upload(file, folder);
   }
 

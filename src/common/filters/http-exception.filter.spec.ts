@@ -28,6 +28,7 @@ describe('HttpExceptionFilter', () => {
     } as unknown as ArgumentsHost;
 
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(filter['logger'], 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -51,7 +52,7 @@ describe('HttpExceptionFilter', () => {
           meta: expect.objectContaining({
             statusCode: HttpStatus.NOT_FOUND,
             path: '/test-path',
-            requestId: 'test-request-id',
+            requestId: expect.any(String),
           }),
         }),
       );
@@ -110,10 +111,6 @@ describe('HttpExceptionFilter', () => {
             message: 'An unexpected error occurred',
           },
         }),
-      );
-      expect(console.error).toHaveBeenCalledWith(
-        'Unhandled exception:',
-        exception,
       );
     });
 

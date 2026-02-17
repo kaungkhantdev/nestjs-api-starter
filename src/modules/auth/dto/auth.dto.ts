@@ -1,4 +1,11 @@
-import { IsEmail, IsString, MinLength, IsNotEmpty } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  IsNotEmpty,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
@@ -35,8 +42,13 @@ export class RegisterDto {
     minLength: 6,
   })
   @IsString()
-  @MinLength(6)
   @IsNotEmpty()
+  @MinLength(8)
+  @MaxLength(128)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._\-#])/, {
+    message:
+      'password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&._-#)',
+  })
   password: string;
 
   @ApiProperty({
@@ -45,6 +57,10 @@ export class RegisterDto {
   })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[a-zA-Z0-9_-]+$/, {
+    message:
+      'username can only contain letters, numbers, underscores and hyphens',
+  })
   username: string;
 
   @ApiProperty({
@@ -55,6 +71,10 @@ export class RegisterDto {
   @IsString()
   @MinLength(2)
   @IsNotEmpty()
+  @Matches(/^[a-zA-ZÀ-ÿ\s'-]+$/, {
+    message:
+      'firstName can only contain letters, spaces, hyphens and apostrophes',
+  })
   firstName: string;
 
   @ApiProperty({
@@ -65,6 +85,10 @@ export class RegisterDto {
   @IsString()
   @MinLength(2)
   @IsNotEmpty()
+  @Matches(/^[a-zA-ZÀ-ÿ\s'-]+$/, {
+    message:
+      'lastName can only contain letters, spaces, hyphens and apostrophes',
+  })
   lastName: string;
 }
 

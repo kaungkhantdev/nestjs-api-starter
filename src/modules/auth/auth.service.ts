@@ -28,59 +28,6 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async login(dto: LoginDto): Promise<AuthResponseDto & TokenPair> {
-    const user = await this.validateCredentials(dto.username, dto.password);
-    return this.generateAuthResponseWithTokens(user);
-  }
-
-  async register(dto: RegisterDto): Promise<AuthResponseDto & TokenPair> {
-    await this.isExitUser(dto.email);
-
-    const hashedPassword = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
-
-    const user = await this.usersService.createUser({
-      ...dto,
-      password: hashedPassword,
-    });
-
-    return this.generateAuthResponseWithTokens(this.excludePassword(user));
-  }
-
-  async refresh(refreshToken: string): Promise<TokenPair> {
-    try {
-      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
-        secret: this.configService.get<string>('jwt.refreshSecret'),
-      });
-
-      const user = await this.usersService.getFindById(payload.sub);
-
-      if (!user || !user.isActive) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      return this.generateTokenPair(this.excludePassword(user));
-    } catch {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
-  }
-
-  async validateCredentials(
-    username: string,
-    password: string,
-  ): Promise<UserWithoutPassword> {
-    const user = await this.usersService.getUserByUsername(username);
-
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is inactive');
-    }
-
-    return this.excludePassword(user);
-  }
-
   private generateTokenPair(user: UserWithoutPassword): TokenPair {
     const payload = {
       sub: user.id,
@@ -135,8 +82,88 @@ export class AuthService {
     return userWithoutPassword;
   }
 
-  private async isExitUser(email: string): Promise<void> {
-    const exitUser = await this.usersService.getUserByEmail(email);
-    if (exitUser) throw new BadRequestException('User already exists');
+  private async isExitUser(email: string, username: string): Promise<void> {
+    const [byEmail, byUsername] = await Promise.all([
+      this.usersService.getUserByEmail(email),
+      this.usersService.getUserByUsername(username),
+    ]);
+    if (byEmail) throw new BadRequestException('Email is already registered');
+    if (byUsername) throw new BadRequestException('Username is already taken');
+  }
+
+  async login(dto: LoginDto): Promise<AuthResponseDto & TokenPair> {
+    const user = await this.validateCredentials(dto.username, dto.password);
+    const result = this.generateAuthResponseWithTokens(user);
+    await this.usersService.setRefreshTokenHash(user.id, result.refreshToken);
+    return result;
+  }
+
+  async register(dto: RegisterDto): Promise<AuthResponseDto & TokenPair> {
+    await this.isExitUser(dto.email, dto.username);
+
+    const hashedPassword = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
+
+    const user = await this.usersService.createUser({
+      ...dto,
+      password: hashedPassword,
+    });
+
+    const result = this.generateAuthResponseWithTokens(
+      this.excludePassword(user),
+    );
+    await this.usersService.setRefreshTokenHash(user.id, result.refreshToken);
+    return result;
+  }
+
+  async refresh(refreshToken: string): Promise<TokenPair> {
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
+        secret: this.configService.get<string>('jwt.refreshSecret'),
+      });
+
+      const user = await this.usersService.getFindById(payload.sub);
+
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      // Verify stored hash matches the incoming token
+      if (
+        !user.refreshTokenHash ||
+        !(await bcrypt.compare(refreshToken, user.refreshTokenHash))
+      ) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const tokens = this.generateTokenPair(this.excludePassword(user));
+
+      // Rotate — store hash of new refresh token
+      await this.usersService.setRefreshTokenHash(user.id, tokens.refreshToken);
+
+      return tokens;
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+  async validateCredentials(
+    username: string,
+    password: string,
+  ): Promise<UserWithoutPassword> {
+    const user = await this.usersService.getUserByUsername(username);
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is inactive');
+    }
+
+    return this.excludePassword(user);
+  }
+
+  async logout(userId: string): Promise<void> {
+    await this.usersService.clearRefreshTokenHash(userId);
   }
 }

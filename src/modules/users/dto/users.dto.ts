@@ -3,10 +3,10 @@ import {
   IsString,
   MinLength,
   IsOptional,
-  IsEnum,
+  MaxLength,
+  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { UserRole } from 'generated/prisma/enums';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -22,7 +22,12 @@ export class CreateUserDto {
     minLength: 6,
   })
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
+  @MaxLength(128)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._\-#])/, {
+    message:
+      'password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&._-#)',
+  })
   password: string;
 
   @ApiProperty({
@@ -38,15 +43,6 @@ export class CreateUserDto {
   })
   @IsString()
   lastName: string;
-
-  @ApiPropertyOptional({
-    description: 'User role',
-    enum: UserRole,
-    example: UserRole.CUSTOMER,
-  })
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
 }
 
 export class UpdateUserDto {
@@ -73,57 +69,11 @@ export class UpdateUserDto {
   })
   @IsOptional()
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
+  @MaxLength(128)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._\-#])/, {
+    message:
+      'password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&._-#)',
+  })
   password?: string;
-}
-
-export class UserResponseDto {
-  @ApiProperty({
-    description: 'User unique identifier',
-    example: 'uuid-456',
-  })
-  id: string;
-
-  @ApiProperty({
-    description: 'User email address',
-    example: 'jane.smith@example.com',
-  })
-  email: string;
-
-  @ApiProperty({
-    description: 'User first name',
-    example: 'Jane',
-  })
-  firstName: string;
-
-  @ApiProperty({
-    description: 'User last name',
-    example: 'Smith',
-  })
-  lastName: string;
-
-  @ApiProperty({
-    description: 'User role',
-    enum: UserRole,
-    example: UserRole.CUSTOMER,
-  })
-  role: UserRole;
-
-  @ApiProperty({
-    description: 'User account status',
-    example: true,
-  })
-  isActive: boolean;
-
-  @ApiProperty({
-    description: 'Account creation timestamp',
-    example: '2024-01-15T10:30:00Z',
-  })
-  createdAt: Date;
-
-  @ApiProperty({
-    description: 'Account last update timestamp',
-    example: '2024-01-20T14:45:00Z',
-  })
-  updatedAt: Date;
 }

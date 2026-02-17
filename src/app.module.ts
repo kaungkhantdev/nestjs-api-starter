@@ -6,6 +6,8 @@ import { DatabaseModule } from '@/database/database.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { StorageModule } from './shared/storage/storage.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -27,6 +29,11 @@ import { StorageModule } from './shared/storage/storage.module';
     StorageModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
