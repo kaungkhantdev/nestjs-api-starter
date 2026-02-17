@@ -1,240 +1,154 @@
-# NestJs API Starter
+# NestJS API Starter
 
-A robust and scalable REST API built with NestJS, Prisma, PostgreSQL, and JWT authentication. This project features a clean architecture with repository pattern, role-based access control, and comprehensive testing.
+A scalable REST API starter built with NestJS, Prisma, PostgreSQL, and JWT authentication. Features clean architecture with repository pattern, role-based access control, file storage via AWS S3, and comprehensive testing.
 
 ## Features
 
-- **Authentication & Authorization**
-  - JWT-based authentication
-  - Local and JWT strategies (Passport)
-  - Role-based access control (CUSTOMER, ADMIN, VENDOR)
-  - Password hashing with bcrypt
-
-- **User Management**
-  - User registration and login
-  - User profile management
-  - Soft delete support
-  - Role-based permissions
-
-- **Architecture**
-  - Clean architecture with repository pattern
-  - Generic repository with CRUD operations
-  - Soft-deletable repository
-  - Custom decorators and guards
-  - Global exception filters
-  - Response transformation interceptors
-
-- **API Documentation**
-  - Swagger/OpenAPI documentation
-  - Interactive API explorer
-
-- **Testing**
-  - Unit tests for services, controllers, and utilities
-  - E2E tests
-  - Integration tests
-  - Test coverage reporting
+- **Authentication & Authorization** — JWT-based auth, Passport strategies, RBAC (CUSTOMER, ADMIN, VENDOR), bcrypt password hashing
+- **User Management** — Registration, login, profile management, soft delete, role-based permissions
+- **File Storage** — AWS S3 integration with presigned URLs
+- **Clean Architecture** — Repository pattern with generic CRUD, soft-delete support, custom decorators, guards, exception filters, and response interceptors
+- **API Documentation** — Swagger/OpenAPI with interactive explorer
+- **Testing** — Unit, integration, and E2E tests with coverage reporting
 
 ## Tech Stack
 
-- **Framework**: NestJS 11
-- **Database**: PostgreSQL with Prisma ORM 7
-- **Authentication**: Passport.js with JWT
-- **Validation**: class-validator & class-transformer
-- **Documentation**: Swagger/OpenAPI
-- **Testing**: Jest & Supertest
-- **Language**: TypeScript 5
+| Layer | Technology |
+|---|---|
+| Framework | NestJS 11 |
+| Language | TypeScript 5 |
+| Database | PostgreSQL 17 + Prisma ORM 7 |
+| Auth | Passport.js + JWT |
+| Storage | AWS S3 |
+| Validation | class-validator & class-transformer |
+| Documentation | Swagger/OpenAPI |
+| Testing | Jest & Supertest |
 
 ## Prerequisites
 
-- Node.js (v18 or higher)
-- PostgreSQL (v14 or higher)
-- npm or yarn
+- Node.js v18+
+- PostgreSQL v14+
+- npm
 
-## Installation
+## Getting Started
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
+# 1. Clone the repository
+git clone https://github.com/kaungkhantdev/nestjs-api-starter.git
 cd nestjs-api-starter
-```
 
-2. Install dependencies:
-```bash
+# 2. Install dependencies
 npm install
-```
 
-3. Set up environment variables:
-```bash
+# 3. Configure environment
 cp .env.example .env
 ```
 
-Edit the `.env` file with your configuration:
+Edit `.env` with your values:
+
 ```env
-# Database
 DATABASE_URL="postgresql://user:password@localhost:5432/nestjs_starter?schema=public"
-
-# JWT
-JWT_SECRET="your-super-secret-jwt-key-change-this"
+JWT_SECRET="your-secret"
 JWT_EXPIRATION="7d"
-
-# App
 PORT=3000
 NODE_ENV="development"
 ```
 
-4. Run Prisma migrations:
 ```bash
+# 4. Run migrations
 npm run prisma:migrate:deploy
-```
 
-5. Generate Prisma client:
-```bash
+# 5. Generate Prisma client
 npm run prisma:generate
-```
 
-## Running the Application
-
-### Development mode
-```bash
+# 6. Start in development mode
 npm run start:dev
 ```
 
-### Production mode
+## Running with Docker
+
+Build and run with Docker directly:
 ```bash
-npm run build
-npm run start:prod
+# Build the image
+docker build --build-arg DATABASE_URL="postgresql://placeholder" -t nestjs-api-starter .
+
+# Run the container
+docker run -p 3000:3000 --env-file .env nestjs-api-starter
 ```
 
-### Debug mode
+Or use Docker Compose (starts both the API and PostgreSQL):
 ```bash
-npm run start:debug
+docker compose up --build
 ```
 
-The API will be available at:
-- Application: `http://localhost:3000`
-- Swagger Documentation: `http://localhost:3000/api`
+The API will be available at `http://localhost:3000`
+Swagger docs at `http://localhost:3000/api`
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `npm run start:dev` | Start in watch mode |
+| `npm run start:prod` | Start production build |
+| `npm run build` | Build the project |
+| `npm run test` | Run unit tests |
+| `npm run test:e2e` | Run E2E tests |
+| `npm run test:cov` | Generate coverage report |
+| `npm run lint` | Lint and auto-fix |
+| `npm run format` | Format with Prettier |
+| `npm run prisma:migrate:dev` | Create a new migration |
+| `npm run prisma:studio` | Open Prisma Studio |
 
 ## API Endpoints
 
 ### Authentication
-- `POST /auth/register` - Register a new user
-- `POST /auth/login` - Login and get JWT token
+- `POST /auth/register` — Register a new user
+- `POST /auth/login` — Login and receive JWT token
 
 ### Users
-- `GET /users` - Get all users (Admin only)
-- `GET /users/:id` - Get user by ID
-- `PUT /users/:id` - Update user
-- `DELETE /users/:id` - Soft delete user
+- `GET /users` — List all users (Admin only)
+- `GET /users/:id` — Get user by ID
+- `PUT /users/:id` — Update user
+- `DELETE /users/:id` — Soft delete user
 
-For detailed API documentation, visit the Swagger UI at `/api` when the application is running.
+Full documentation available at `/api` when the server is running.
 
-## Testing
 
-### Run all tests
-```bash
-npm run test
-```
-
-### Run tests in watch mode
-```bash
-npm run test:watch
-```
-
-### Run e2e tests
-```bash
-npm run test:e2e
-```
-
-### Generate test coverage
-```bash
-npm run test:cov
-```
-
-## Architecture Patterns
+## Architecture
 
 ### Repository Pattern
-The project uses a generic repository pattern for database operations:
+- `BaseRepository` — Generic CRUD operations
+- `ReadRepository` — Read-only operations
+- `WriteRepository` — Create, update, delete
+- `SoftDeletableRepository` — Soft delete support
 
-- **BaseRepository**: Base CRUD operations
-- **ReadRepository**: Read-only operations
-- **WriteRepository**: Create, update, delete operations
-- **SoftDeletableRepository**: Soft delete support
-
-### Authentication Flow
+### Auth Flow
 1. User registers or logs in
-2. Server validates credentials and generates JWT token
-3. Client includes JWT token in Authorization header
-4. JwtAuthGuard validates token on protected routes
-5. RoleGuard checks user permissions
+2. Server validates credentials and issues a JWT
+3. Client sends JWT in the `Authorization` header
+4. `JwtAuthGuard` validates the token on protected routes
+5. `RoleGuard` enforces role-based permissions
 
 ### Custom Decorators
-- `@Public()` - Mark routes as public (bypass JWT guard)
-- `@Roles(UserRole.ADMIN)` - Protect routes by role
-- `@CurrentUser()` - Get current user from request
+- `@Public()` — Bypass JWT guard
+- `@Roles(UserRole.ADMIN)` — Restrict by role
+- `@CurrentUser()` — Inject current user from request
 
-## Development
+## Security
 
-### Code Formatting
-```bash
-npm run format
-```
-
-### Linting
-```bash
-npm run lint
-```
-
-### Database Commands
-```bash
-# Create migration
-npx prisma migrate dev --name migration_name
-
-# Reset database
-npx prisma migrate reset
-
-# Open Prisma Studio
-npx prisma studio
-```
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | - |
-| `JWT_SECRET` | Secret key for JWT signing | - |
-| `JWT_EXPIRATION` | JWT token expiration time | 7d |
-| `PORT` | Application port | 3000 |
-| `NODE_ENV` | Environment mode | development |
-
-## Security Features
-
-- Password hashing with bcrypt
-- JWT token-based authentication
+- bcrypt password hashing
+- JWT authentication
 - Role-based access control (RBAC)
-- Input validation with class-validator
+- Input validation and payload whitelisting
 - SQL injection protection via Prisma
 - Global exception handling
-- Request payload whitelisting
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Rate limiting via `@nestjs/throttler`
 
 ## License
 
-This project is [UNLICENSED](LICENSE).
+[MIT](LICENSE)
 
-## Resources
+## Author
 
-- [NestJS Documentation](https://docs.nestjs.com)
-- [Prisma Documentation](https://www.prisma.io/docs)
-- [Passport.js Documentation](http://www.passportjs.org)
-- [JWT Documentation](https://jwt.io)
-
-## Support
-
-For questions and support, please open an issue in the GitHub repository.
+**Kaung Khant Zaw**
+[github.com/kaungkhantdev](https://github.com/kaungkhantdev)

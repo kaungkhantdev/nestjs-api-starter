@@ -1,0 +1,43 @@
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgresql://nestuser:1234@db:5432/test
+    command: ["run", "prisma:migrate:deploy"] 
+    environment:
+      - DATABASE_URL=postgresql://nestuser:1234@db:5432/test
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgresql://nestuser:1234@db:5432/test
+    command: ["run", "start:prod"]
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  db:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_USER: nestuser
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nestuser -d test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
