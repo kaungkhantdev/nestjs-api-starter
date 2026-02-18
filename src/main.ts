@@ -7,6 +7,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { API_PREFIX, API_VERSION } from './common/constants/routes.constant';
+import { parseCorsOrigins } from './common/utils/parse-cors-origins.util';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -37,16 +38,11 @@ async function bootstrap() {
   );
 
   // Cors
-  const frontendUrl = process.env.FRONTEND_URL?.split(',') || [];
-  if (!frontendUrl.length) {
-    throw new Error('FRONTEND_URL environment variable is required');
-  }
-
   app.enableCors({
-    origin: frontendUrl,
+    origin: parseCorsOrigins(process.env.FRONTEND_URL),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id'],
   });
 
   // Global filters

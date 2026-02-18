@@ -1,12 +1,14 @@
-import { BadRequestException, Controller, Get } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
+import { Public } from './common/decorators/public.decorator';
 
 @ApiTags('General')
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @Public()
   @Get()
   @ApiOperation({
     summary: 'Health check',
@@ -22,37 +24,5 @@ export class AppController {
   })
   getHello(): string {
     return this.appService.getHello();
-  }
-
-  @Get('data')
-  @ApiOperation({
-    summary: 'Get sample data',
-    description: 'Returns sample data with metadata (for testing purposes)',
-  })
-  getData(): {
-    data: {
-      id: number;
-      name: string;
-    };
-    metadata: {
-      total: number;
-      next_page: number;
-      size: number;
-    };
-  } {
-    return this.appService.getData();
-  }
-
-  @Get('error')
-  @ApiOperation({
-    summary: 'Test error handling',
-    description:
-      'Throws a sample error to test error handling (for testing purposes)',
-  })
-  getError() {
-    throw new BadRequestException('Something bad happened', {
-      cause: new Error(),
-      description: 'Some error description',
-    });
   }
 }

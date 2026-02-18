@@ -15,7 +15,9 @@ export class LocalStorageProvider implements IStorageProvider {
   private readonly basePath: string;
 
   constructor(config: ConfigService) {
-    this.basePath = config.get<string>('storage.local.path') || './uploads';
+    this.basePath = path.resolve(
+      config.get<string>('storage.local.path') || './uploads',
+    );
   }
 
   private safePath(userInput: string): string {

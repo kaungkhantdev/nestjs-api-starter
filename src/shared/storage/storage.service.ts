@@ -15,7 +15,8 @@ export class StorageService {
     private readonly provider: IStorageProvider,
     private readonly config: ConfigService,
   ) {
-    this.maxFileSize = this.config.get<number>('storage.maxFileSize') || 5;
+    this.maxFileSize =
+      this.config.get<number>('storage.maxFileSize') || 5 * 1024 * 1024;
     this.allowedMimeTypes =
       this.config.get<string[]>('storage.allowedMimeTypes') || [];
   }
