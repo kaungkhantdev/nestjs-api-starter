@@ -7,9 +7,6 @@ yarn-error.log*
 # Build output
 dist
 
-# Generated files
-generated
-
 # Git
 .git
 .gitignore
