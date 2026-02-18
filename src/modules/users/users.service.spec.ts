@@ -103,44 +103,6 @@ describe('UsersService', () => {
     });
   });
 
-  describe('getActiveUsers', () => {
-    it('should return active users with default pagination', async () => {
-      const activeUsers = mockUsers.filter((u) => u.isActive);
-      userRepository.findActive.mockResolvedValue(activeUsers);
-
-      const result = await service.getActiveUsers();
-
-      expect(userRepository.findActive).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-      });
-      expect(result).toEqual(activeUsers);
-    });
-
-    it('should return active users with custom pagination', async () => {
-      const activeUsers = mockUsers.filter((u) => u.isActive);
-      userRepository.findActive.mockResolvedValue(activeUsers);
-
-      await service.getActiveUsers(2, 5);
-
-      expect(userRepository.findActive).toHaveBeenCalledWith({
-        skip: 5,
-        take: 5,
-      });
-    });
-
-    it('should calculate correct skip for different pages', async () => {
-      userRepository.findActive.mockResolvedValue([]);
-
-      await service.getActiveUsers(3, 10);
-
-      expect(userRepository.findActive).toHaveBeenCalledWith({
-        skip: 20,
-        take: 10,
-      });
-    });
-  });
-
   describe('createUser', () => {
     const userData = {
       email: 'new@example.com',

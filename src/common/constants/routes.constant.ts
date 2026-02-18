@@ -5,6 +5,7 @@
  */
 export const API_PREFIX = 'api/v';
 export const API_VERSION = '1';
+export const REFRESH_COOKIE = 'refreshToken';
 
 /**
  * Pre-built cookie paths scoped to specific routes.

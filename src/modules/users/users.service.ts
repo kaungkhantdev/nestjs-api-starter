@@ -30,15 +30,8 @@ export class UsersService {
     return this.usersRepository.findById(id);
   }
 
-  async getUserByUsername(email: string): Promise<User | null> {
-    return this.usersRepository.findByUsername(email);
-  }
-
-  async getActiveUsers(page = 1, limit = 10): Promise<User[]> {
-    return this.usersRepository.findActive({
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+  async getUserByUsername(username: string): Promise<User | null> {
+    return this.usersRepository.findByUsername(username);
   }
 
   async createUser(data: CreateUserInput): Promise<User> {

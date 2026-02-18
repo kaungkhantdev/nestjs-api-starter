@@ -5,7 +5,6 @@ import {
   Res,
   Req,
   Get,
-  UseGuards,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
@@ -29,15 +28,17 @@ import {
 import { Public } from '../../common/decorators/public.decorator';
 import {
   COOKIE_PATHS,
+  REFRESH_COOKIE,
   REFRESH_TOKEN_MAX_AGE_MS,
 } from '../../common/constants/routes.constant';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from 'generated/prisma/client';
 import { Throttle } from '@nestjs/throttler';
+import { plainToInstance } from 'class-transformer';
+import { UserResponseDto } from '../users/dto/users.response.dto';
 
 @ApiTags('Authentication')
-@Controller({ path: 'auth', version: '1' })
+@Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -67,7 +68,7 @@ export class AuthController {
       await this.authService.register(registerDto);
 
     // Set refreshToken as httpOnly cookie
-    res.cookie('refreshToken', refreshToken, {
+    res.cookie(REFRESH_COOKIE, refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -107,7 +108,7 @@ export class AuthController {
       await this.authService.login(loginDto);
 
     // Set refreshToken as httpOnly cookie
-    res.cookie('refreshToken', refreshToken, {
+    res.cookie(REFRESH_COOKIE, refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -141,7 +142,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<RefreshResponseDto> {
-    const refreshToken = req.cookies['refreshToken'];
+    const refreshToken = req.cookies[REFRESH_COOKIE];
 
     if (!refreshToken) {
       throw new UnauthorizedException('No refresh token');
@@ -151,7 +152,7 @@ export class AuthController {
       await this.authService.refresh(refreshToken);
 
     // Rotate refresh token
-    res.cookie('refreshToken', newRefreshToken, {
+    res.cookie(REFRESH_COOKIE, newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -162,9 +163,8 @@ export class AuthController {
     return { accessToken };
   }
 
-  @Public()
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Logout user',
     description: 'Clears the refresh token cookie',
@@ -179,12 +179,11 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<LogoutResponseDto> {
     await this.authService.logout(userId);
-    res.clearCookie('refreshToken', { path: COOKIE_PATHS.authRefresh });
+    res.clearCookie(REFRESH_COOKIE, { path: COOKIE_PATHS.authRefresh });
     return { success: true };
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get current user',
@@ -193,13 +192,15 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Current user information',
+    type: UserResponseDto,
   })
   @ApiUnauthorizedResponse({
     description: 'Unauthorized - Invalid or missing token',
   })
   me(@CurrentUser() user: User) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    const result = plainToInstance(UserResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
+    return result;
   }
 }

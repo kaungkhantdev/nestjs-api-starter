@@ -303,10 +303,8 @@ describe('AuthController', () => {
         lastName: mockUser.lastName,
         role: mockUser.role,
         isActive: mockUser.isActive,
-        refreshTokenHash: mockUser.refreshTokenHash,
         createdAt: mockUser.createdAt,
         updatedAt: mockUser.updatedAt,
-        deletedAt: mockUser.deletedAt,
       });
     });
   });

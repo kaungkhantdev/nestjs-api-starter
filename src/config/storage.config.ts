@@ -1,6 +1,6 @@
 export default () => ({
   storage: {
-    provider: process.env.STORAGE_PROVIDER || 's3',
+    provider: process.env.STORAGE_PROVIDER || 'local',
     maxFileSize:
       parseInt(process.env.MAX_FILE_SIZE_MB || '10', 10) * 1024 * 1024 ||
       10 * 1024 * 1024, // 10MB
