@@ -6,6 +6,7 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import { API_PREFIX, API_VERSION } from './common/constants/routes.constant';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,8 +20,8 @@ async function bootstrap() {
   // Versioning
   app.enableVersioning({
     type: VersioningType.URI,
-    defaultVersion: '1',
-    prefix: 'api/v',
+    defaultVersion: API_VERSION,
+    prefix: API_PREFIX,
   });
 
   // Global pipes
