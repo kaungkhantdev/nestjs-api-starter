@@ -55,6 +55,4 @@ uploads
 # Misc
 .eslintrc*
 eslint.config.*
-tsconfig*.json
-nest-cli.json
 api.http
