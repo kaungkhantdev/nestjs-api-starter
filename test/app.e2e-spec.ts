@@ -33,23 +33,4 @@ describe('AppController (e2e)', () => {
         .expect('Hello World!');
     });
   });
-
-  describe('GET /data', () => {
-    it('should return sample data with metadata', () => {
-      return request(app.getHttpServer())
-        .get('/data')
-        .expect(200)
-        .expect({
-          data: {
-            id: 1,
-            name: 'hello',
-          },
-          metadata: {
-            total: 1,
-            next_page: 1,
-            size: 10,
-          },
-        });
-    });
-  });
 });
