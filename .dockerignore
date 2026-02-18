@@ -53,3 +53,7 @@ uploads
 .eslintrc*
 eslint.config.*
 api.http
+
+# Git hooks & commit tooling
+.husky
+commitlint.config.*
