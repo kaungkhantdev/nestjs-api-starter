@@ -2,7 +2,7 @@ name: Scheduled Maintenance
 
 on:
   schedule:
-    - cron: "0 9 * * 1" # Every Monday at 9:00 UTC
+    - cron: '0 9 * * 1' # Every Monday at 9:00 UTC
   workflow_dispatch:
 
 jobs:
@@ -16,14 +16,15 @@ jobs:
       - name: Set up Node.js
         uses: ./.github/actions/node-setup-action
         with:
-          node-version: "22"
+          node-version: '22'
 
       - name: Run npm audit
         run: npm audit --audit-level=moderate || true
         id: audit
+        continue-on-error: true
 
       - name: Create Issue on Vulnerabilities
-        if: failure()
+        if: steps.audit.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           script: |
@@ -64,12 +65,12 @@ jobs:
             DATABASE_URL=${{ env.DATABASE_URL }}
           push: false
           load: true
-          tags: ecommerce-api:scan
+          tags: nest-api-starter:scan
 
       - name: Run Trivy Vulnerability Scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.30.0
         with:
-          image-ref: ecommerce-api:scan
+          image-ref: nest-api-starter:scan
           format: table
           exit-code: 1
           severity: CRITICAL,HIGH
