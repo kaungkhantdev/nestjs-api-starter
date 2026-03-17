@@ -68,7 +68,7 @@ jobs:
           tags: nest-api-starter:scan
 
       - name: Run Trivy Vulnerability Scanner
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: nest-api-starter:scan
           format: table
